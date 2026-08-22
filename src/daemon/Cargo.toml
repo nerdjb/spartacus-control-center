@@ -1,0 +1,38 @@
+[package]
+name = "spartacus-daemon"
+version = "0.1.0"
+edition = "2021"
+description = "DeepCool Spartacus USB control daemon for Linux"
+license = "MIT OR GPL-3.0-only"
+
+[dependencies]
+# USB communication (both LCD and Linker use vendor/HID interrupt transfers via libusb)
+rusb = "0.9"
+libc = "0.2"
+
+# Baseline JPEG encoding for the 480x480 LCD stream
+jpeg-encoder = "0.6"
+
+# Async runtime
+tokio = { version = "1.35", features = ["full"] }
+
+# Serialization / IPC / config
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+toml = "0.8"
+
+# Logging facade (logger implementation lives in main.rs)
+log = { version = "0.4", features = ["std", "alloc"] }
+
+# Error handling
+anyhow = "1.0"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+
+[[bin]]
+name = "spartacus-daemon"
+path = "src/main.rs"

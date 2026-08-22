@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="gradientCoolant" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#0099ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#0050ff;stop-opacity:1" />
+    </linearGradient>
+    <radialGradient id="glowRGB" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#ff0080;stop-opacity:0.8" />
+      <stop offset="50%" style="stop-color:#00ff88;stop-opacity:0.5" />
+      <stop offset="100%" style="stop-color:#0080ff;stop-opacity:0" />
+    </radialGradient>
+    <filter id="glowEffect">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <filter id="shadowEffect">
+      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="512" height="512" fill="#0a0e27"/>
+  
+  <!-- Main cooler block body -->
+  <g filter="url(#shadowEffect)">
+    <!-- Base block with coolant gradient -->
+    <rect x="96" y="80" width="320" height="280" rx="20" fill="url(#gradientCoolant)" opacity="0.9"/>
+    
+    <!-- Top header with metallic look -->
+    <rect x="96" y="80" width="320" height="50" rx="20" fill="#1a1f3a" stroke="#00d4ff" stroke-width="2"/>
+    
+    <!-- Center coolant chamber (transparent with glow) -->
+    <rect x="120" y="120" width="272" height="200" rx="15" fill="#001a2e" opacity="0.7" stroke="url(#gradientCoolant)" stroke-width="2"/>
+    
+    <!-- Inlet/Outlet ports -->
+    <g>
+      <!-- Left inlet -->
+      <circle cx="110" cy="170" r="12" fill="#0099ff" stroke="#00d4ff" stroke-width="2" filter="url(#glowEffect)"/>
+      <path d="M 95 170 L 110 170" stroke="#0099ff" stroke-width="3" stroke-linecap="round"/>
+      
+      <!-- Right outlet -->
+      <circle cx="402" cy="170" r="12" fill="#ff0080" stroke="#ff0080" stroke-width="2" filter="url(#glowEffect)"/>
+      <path d="M 417 170 L 402 170" stroke="#ff0080" stroke-width="3" stroke-linecap="round"/>
+      
+      <!-- Bottom return -->
+      <circle cx="256" cy="340" r="12" fill="#0099ff" stroke="#00d4ff" stroke-width="2" filter="url(#glowEffect)"/>
+      <path d="M 256 355 L 256 340" stroke="#0099ff" stroke-width="3" stroke-linecap="round"/>
+    </g>
+    
+    <!-- RGB Ring 1 (outer ring - red) -->
+    <circle cx="256" cy="220" r="90" fill="none" stroke="#ff0066" stroke-width="6" opacity="0.4" filter="url(#glowEffect)"/>
+    
+    <!-- RGB Ring 2 (middle ring - green) -->
+    <circle cx="256" cy="220" r="70" fill="none" stroke="#00ff88" stroke-width="6" opacity="0.5" filter="url(#glowEffect)"/>
+    
+    <!-- RGB Ring 3 (inner ring - blue) -->
+    <circle cx="256" cy="220" r="50" fill="none" stroke="#0080ff" stroke-width="6" opacity="0.6" filter="url(#glowEffect)"/>
+    
+    <!-- Center pump icon (heart-like cooling block) -->
+    <g transform="translate(256, 220)">
+      <path d="M 0,-8 Q -6,-14 -12,-14 Q -18,-14 -20,-8 Q -20,-2 0,12 Q 20,-2 20,-8 Q 22,-14 12,-14 Q 6,-14 0,-8 Z" 
+            fill="url(#gradientCoolant)" stroke="#00d4ff" stroke-width="1.5" filter="url(#glowEffect)"/>
+    </g>
+    
+    <!-- Bottom status panel -->
+    <rect x="120" y="350" width="272" height="40" rx="10" fill="#1a1f3a" stroke="#00d4ff" stroke-width="1.5"/>
+    
+    <!-- Status indicators -->
+    <circle cx="150" cy="370" r="5" fill="#00ff88" filter="url(#glowEffect)"/>
+    <circle cx="190" cy="370" r="5" fill="#0080ff" filter="url(#glowEffect)"/>
+    <circle cx="230" cy="370" r="5" fill="#ff0066" filter="url(#glowEffect)"/>
+    <circle cx="270" cy="370" r="5" fill="#ffaa00" filter="url(#glowEffect)"/>
+    <circle cx="310" cy="370" r="5" fill="#00ffff" filter="url(#glowEffect)"/>
+    <circle cx="350" cy="370" r="5" fill="#ff00ff" filter="url(#glowEffect)"/>
+  </g>
+  
+  <!-- Outer glow effect -->
+  <circle cx="256" cy="220" r="180" fill="url(#glowRGB)" opacity="0.15" filter="url(#glowEffect)"/>
+  
+  <!-- Text branding (scalable) -->
+  <text x="256" y="420" font-family="Arial, sans-serif" font-size="20" font-weight="bold" 
+        text-anchor="middle" fill="#00d4ff" filter="url(#glowEffect)">
+    SPARTACUS
+  </text>
+  <text x="256" y="450" font-family="Arial, sans-serif" font-size="12" 
+        text-anchor="middle" fill="#00d4ff" opacity="0.7">
+    CONTROL CENTER
+  </text>
+</svg>

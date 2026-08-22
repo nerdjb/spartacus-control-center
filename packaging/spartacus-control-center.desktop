@@ -1,0 +1,16 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Spartacus Control Center
+Comment=DeepCool Spartacus Liquid Cooler Control
+Exec=spartacus-control-center
+Icon=spartacus-control
+Categories=Utility;System;
+Keywords=deepcool;cooling;liquid;temperature;fan;rgb;argb;
+Terminal=false
+StartupNotify=true
+X-AppStream-Ignore=false
+
+# System tray / Status notifier support
+X-DesktopEnvironment=KDE;GNOME;XFCE;
+X-DBUS-ServiceName=org.deepcool.SpartacusControlCenter

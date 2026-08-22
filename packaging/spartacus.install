@@ -1,0 +1,51 @@
+# .install file for spartacus-control-center PKGBUILD
+# Post-install and pre-remove hooks
+
+post_install() {
+    echo "╔════════════════════════════════════════════════════════╗"
+    echo "║  Spartacus Control Center - Installation Complete      ║"
+    echo "╚════════════════════════════════════════════════════════╝"
+    echo ""
+    echo "✓ Daemon and GUI installed successfully"
+    echo ""
+    echo "IMPORTANT: First-time setup required:"
+    echo ""
+    echo "1. Enable the daemon service (runs automatically):"
+    echo "   $ systemctl --user enable --now spartacus-daemon"
+    echo ""
+    echo "2. Load udev rules (requires root):"
+    echo "   $ sudo udevadm control --reload"
+    echo "   $ sudo udevadm trigger --attr-match=idVendor=3633"
+    echo ""
+    echo "3. Verify daemon connectivity:"
+    echo "   $ systemctl --user status spartacus-daemon"
+    echo "   $ journalctl --user -u spartacus-daemon -n 20"
+    echo ""
+    echo "4. Launch the control center:"
+    echo "   $ spartacus-control-center"
+    echo ""
+    echo "If you have an NVIDIA GPU, install: nvidia-utils"
+    echo "If you have an AMD GPU, install: rocm-core"
+    echo ""
+}
+
+post_upgrade() {
+    echo "✓ Spartacus Control Center upgraded to the latest version"
+    echo ""
+    echo "Restart the daemon to apply changes:"
+    echo "   $ systemctl --user restart spartacus-daemon"
+    echo ""
+}
+
+pre_remove() {
+    echo "Stopping daemon..."
+    systemctl --user stop spartacus-daemon 2>/dev/null || true
+}
+
+post_remove() {
+    echo "✓ Spartacus Control Center uninstalled"
+    echo ""
+    echo "Note: Configuration files at /etc/spartacus/config.toml remain"
+    echo "Remove them manually if desired: sudo rm -rf /etc/spartacus"
+    echo ""
+}

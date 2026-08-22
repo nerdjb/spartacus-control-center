@@ -1,0 +1,18 @@
+[Unit]
+Description=DeepCool Spartacus Control Center Daemon
+Documentation=man:spartacus-daemon(1)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/spartacus-daemon
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+# User service - runs as current user, not root
+# udev rules grant USB device access without root
+
+[Install]
+WantedBy=default.target

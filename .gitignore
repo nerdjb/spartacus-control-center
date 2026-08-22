@@ -1,0 +1,18 @@
+# Rust build output
+src/daemon/target/
+
+# Python caches
+__pycache__/
+*.py[cod]
+
+# Local virtual environments
+.venv/
+venv/
+
+# Editor and OS files
+.vscode/
+.idea/
+.DS_Store
+
+# Local runtime and logs
+*.log

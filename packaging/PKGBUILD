@@ -1,0 +1,123 @@
+# Arch Linux PKGBUILD for Spartacus Control Center
+# Build and install with: makepkg -si
+# Or publish to AUR
+
+pkgname=spartacus-control-center
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="DeepCool Spartacus 360/420 Liquid Cooler Control Center for Linux"
+arch=('x86_64')
+url="https://github.com/yourusername/spartacus-control-center"
+license=('MIT' 'GPL3')
+depends=(
+    'libusb'
+    'hidapi'
+    'python>=3.9'
+    'python-pyqt6'
+    'systemd-libs'
+)
+makedepends=(
+    'rust'
+    'cargo'
+    'python-build'
+    'python-installer'
+    'python-wheel'
+    'imagemagick'
+    'git'
+)
+optdepends=(
+    'nvidia-utils: for NVIDIA GPU monitoring'
+    'rocm-core: for AMD GPU monitoring'
+)
+provides=('spartacus-daemon' 'spartacus-control-center')
+conflicts=()
+backup=('etc/spartacus/config.toml')
+install=spartacus.install
+
+source=(
+    "git+https://github.com/yourusername/spartacus-control-center.git#branch=main"
+)
+sha256sums=('SKIP')
+
+build() {
+    cd "${srcdir}/${pkgname}"
+
+    # Build Rust daemon
+    cargo build --release --manifest-path src/daemon/Cargo.toml
+
+    # Generate icon PNGs from SVG
+    python3 scripts/generate_icons.py
+}
+
+package() {
+    cd "${srcdir}/${pkgname}"
+
+    # Install daemon binary
+    install -Dm755 target/release/spartacus-daemon "${pkgdir}/usr/bin/spartacus-daemon"
+
+    # Install GUI
+    install -Dm755 src/gui/main.py "${pkgdir}/usr/share/spartacus/main.py"
+    install -Dm755 src/gui/ui/*.py "${pkgdir}/usr/share/spartacus/ui/"
+    install -Dm755 src/gui/daemon/*.py "${pkgdir}/usr/share/spartacus/daemon/"
+
+    # Install launcher script
+    mkdir -p "${pkgdir}/usr/bin"
+    cat > "${pkgdir}/usr/bin/spartacus-control-center" << 'EOF'
+#!/bin/bash
+exec python3 /usr/share/spartacus/main.py "$@"
+EOF
+    chmod +x "${pkgdir}/usr/bin/spartacus-control-center"
+
+    # Install systemd user service
+    install -Dm644 packaging/spartacus-daemon.service \
+        "${pkgdir}/usr/lib/systemd/user/spartacus-daemon.service"
+
+    # Install udev rules (requires root to load)
+    install -Dm644 packaging/99-spartacus.rules \
+        "${pkgdir}/etc/udev/rules.d/99-spartacus.rules"
+
+    # Install desktop launcher
+    install -Dm644 packaging/spartacus-control-center.desktop \
+        "${pkgdir}/usr/share/applications/spartacus-control-center.desktop"
+
+    # Install icons
+    for size in 48 128 256 512; do
+        install -Dm644 "assets/icons/${size}x${size}/spartacus-control.png" \
+            "${pkgdir}/usr/share/icons/hicolor/${size}x${size}/apps/spartacus-control.png"
+    done
+
+    # Install documentation
+    install -Dm644 README.md "${pkgdir}/usr/share/doc/spartacus-control-center/README.md"
+
+    # Install default configuration
+    mkdir -p "${pkgdir}/etc/spartacus"
+    cat > "${pkgdir}/etc/spartacus/config.toml" << 'EOF'
+# Spartacus Control Center Configuration
+
+[usb]
+lcd_vendor_id = 0x3633
+lcd_product_id = 0x0027
+controller_vendor_id = 0x3633
+controller_product_id = 0x002D
+usb_timeout_ms = 5000
+frame_rate = 30
+
+[cooling]
+pump_min_rpm = 1500
+pump_max_rpm = 3000
+fan_min_rpm = 1000
+fan_max_rpm = 3000
+hysteresis = 5
+update_interval_ms = 1000
+
+[telemetry]
+hwmon_update_ms = 1000
+gpu_update_ms = 2000
+cpu_update_ms = 1000
+EOF
+}
+
+# Source optional install script
+if [[ -f spartacus.install ]]; then
+    source spartacus.install
+fi
