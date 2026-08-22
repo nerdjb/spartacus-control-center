@@ -2,6 +2,7 @@
 // Collects system metrics: CPU temp, GPU temp, utilization, etc.
 
 pub mod collector;
+pub mod sysfs;
 
 pub use collector::TelemetryCollector;
 

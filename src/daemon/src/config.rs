@@ -11,6 +11,37 @@ pub struct Config {
     pub cooling: CoolingConfig,
     pub telemetry: TelemetryConfig,
     pub ipc: IPCConfig,
+    #[serde(default)]
+    pub screen: ScreenConfig,
+}
+
+/// LCD theme selection.
+/// Available themes: "cards", "cards-light", "colorful", "rings"
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ScreenConfig {
+    #[serde(default = "default_theme")]
+    pub theme: String,
+    /// Refresh interval for streamed frames (ms). Designs show a clock with
+    /// seconds, so 1000 keeps them ticking; raise to lower USB traffic.
+    #[serde(default = "default_refresh_ms")]
+    pub refresh_ms: u64,
+}
+
+fn default_theme() -> String {
+    "cards".to_string()
+}
+
+fn default_refresh_ms() -> u64 {
+    1000
+}
+
+impl Default for ScreenConfig {
+    fn default() -> Self {
+        Self {
+            theme: default_theme(),
+            refresh_ms: default_refresh_ms(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -79,6 +110,7 @@ impl Default for Config {
                 max_connections: 10,
                 request_timeout_ms: 5000,
             },
+            screen: ScreenConfig::default(),
         }
     }
 }

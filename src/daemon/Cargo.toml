@@ -24,6 +24,10 @@ toml = "0.8"
 # Logging facade (logger implementation lives in main.rs)
 log = { version = "0.4", features = ["std", "alloc"] }
 
+# Screen theme rendering (pure-Rust TTF rasterizer) + local clock
+fontdue = "0.9"
+chrono = "0.4"
+
 # Error handling
 anyhow = "1.0"
 

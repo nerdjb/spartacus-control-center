@@ -1,124 +1,117 @@
-// Telemetry Collector Implementation
-// Reads CPU temp from hwmon, GPU temp from nvidia-smi/amdgpu, and system stats
+// Telemetry Collector
+// Samples CPU/GPU temps + usage, CPU frequency, RAM, disk usage, and network
+// rates once per second into shared DaemonState.
 
 use crate::DaemonState;
-use anyhow::Result;
-use log::{debug, error, warn};
+use log::debug;
 use std::sync::Arc;
-use tokio::fs;
 use tokio::sync::RwLock;
 use tokio::time::{interval, Duration};
 
+use super::sysfs;
+
 pub struct TelemetryCollector {
     state: Arc<RwLock<DaemonState>>,
+    prev_cpu_times: Option<(u64, u64)>, // (idle, total)
+    prev_net_bytes: Option<(u64, u64)>, // (rx, tx)
 }
 
 impl TelemetryCollector {
     pub fn new(state: Arc<RwLock<DaemonState>>) -> Self {
-        Self { state }
+        Self {
+            state,
+            prev_cpu_times: None,
+            prev_net_bytes: None,
+        }
     }
 
-    pub async fn run(self) -> Result<()> {
+    pub async fn run(mut self) {
         log::info!("Telemetry Collector starting...");
-
-        let mut cpu_interval = interval(Duration::from_millis(1000));
-        let mut gpu_interval = interval(Duration::from_millis(2000));
+        let mut tick = interval(Duration::from_millis(1000));
 
         loop {
-            tokio::select! {
-                _ = cpu_interval.tick() => {
-                    if let Err(e) = self.update_cpu_telemetry().await {
-                        warn!("Failed to read CPU telemetry: {}", e);
-                    }
-                }
-
-                _ = gpu_interval.tick() => {
-                    if let Err(e) = self.update_gpu_telemetry().await {
-                        debug!("GPU telemetry unavailable: {}", e);
-                    }
-                }
-            }
+            tick.tick().await;
+            self.update_all().await;
         }
     }
 
-    /// Read CPU temperature from hwmon (Linux native)
-    async fn update_cpu_telemetry(&self) -> Result<()> {
-        // Common hwmon paths for CPU temperature
-        let hwmon_paths = vec![
-            "/sys/class/hwmon/hwmon0/temp1_input",
-            "/sys/class/thermal/thermal_zone0/temp",
-            "/sys/devices/virtual/thermal/thermal_zone0/temp",
-        ];
+    async fn update_all(&mut self) {
+        let cpu_temp = sysfs::cpu_temp().await.unwrap_or(0.0);
+        let cpu_freq = sysfs::cpu_freq_ghz().await.unwrap_or(0.0);
+        let cpu_usage = self.cpu_usage().await;
+        let gpu = sysfs::gpu_telemetry().await;
+        let ram = sysfs::ram_gb().await.ok();
+        let disk = sysfs::disk_gb().ok();
+        let net = self.net_rates().await;
 
-        for path in hwmon_paths {
-            if let Ok(content) = fs::read_to_string(path).await {
-                if let Ok(temp_raw) = content.trim().parse::<f32>() {
-                    let temp_c = temp_raw / 1000.0; // hwmon uses millidegrees
-                    let mut state = self.state.write().await;
-                    state.cpu_temp = temp_c;
-                    debug!("CPU Temp: {:.1}°C", temp_c);
-                    return Ok(());
-                }
-            }
-        }
-
-        Err(anyhow::anyhow!("No hwmon CPU temperature source found"))
-    }
-
-    /// Read GPU temperature (NVIDIA or AMD)
-    async fn update_gpu_telemetry(&self) -> Result<()> {
-        // Try NVIDIA GPU first
-        if let Ok(temp) = self.read_nvidia_gpu_temp().await {
+        {
             let mut state = self.state.write().await;
-            state.gpu_temp = temp;
-            debug!("GPU Temp (NVIDIA): {:.1}°C", temp);
-            return Ok(());
+            state.cpu_temp = cpu_temp;
+            state.cpu_usage = cpu_usage;
+            state.cpu_freq_ghz = cpu_freq;
+            if let Some((temp, usage)) = gpu {
+                state.gpu_temp = temp;
+                state.gpu_usage = usage;
+            }
+            if let Some((used, total)) = ram {
+                state.ram_used_gb = used;
+                state.ram_total_gb = total;
+            }
+            if let Some((used, total)) = disk {
+                state.disk_used_gb = used;
+                state.disk_total_gb = total;
+            }
+            state.net_down_kbps = net.0;
+            state.net_up_kbps = net.1;
         }
 
-        // Try AMD GPU
-        if let Ok(temp) = self.read_amd_gpu_temp().await {
-            let mut state = self.state.write().await;
-            state.gpu_temp = temp;
-            debug!("GPU Temp (AMD): {:.1}°C", temp);
-            return Ok(());
-        }
-
-        Err(anyhow::anyhow!("No GPU temperature source found"))
+        debug!(
+            "CPU {}% {:.2}GHz {:.0}C | GPU {:.0}% | RAM {:.1}/{:.1}GB | NET d{:.0} u{:.0} kB/s",
+            cpu_usage as u8,
+            cpu_freq,
+            cpu_temp,
+            gpu.map(|g| g.1).unwrap_or(0.0),
+            ram.map(|r| r.0).unwrap_or(0.0),
+            ram.map(|r| r.1).unwrap_or(0.0),
+            net.0,
+            net.1
+        );
     }
 
-    /// Read NVIDIA GPU temperature using nvidia-smi
-    async fn read_nvidia_gpu_temp(&self) -> Result<f32> {
-        let output = tokio::process::Command::new("nvidia-smi")
-            .args(&["--query-gpu=temperature.gpu", "--format=csv,noheader"])
-            .output()
-            .await?;
-
-        let stdout = String::from_utf8(output.stdout)?;
-        let temp_str = stdout.trim().split_whitespace().next().unwrap_or("0");
-        let temp = temp_str.parse::<f32>()?;
-
-        Ok(temp)
-    }
-
-    /// Read AMD GPU temperature from amdgpu sysfs
-    async fn read_amd_gpu_temp(&self) -> Result<f32> {
-        // Common AMD GPU hwmon paths
-        let amd_paths = vec![
-            "/sys/class/hwmon/hwmon*/temp2_input", // GPU die temp
-            "/sys/devices/pci0000:00/*/hwmon/hwmon*/temp2_input",
-        ];
-
-        for path_pattern in amd_paths {
-            if path_pattern.contains('*') {
-                // Handle glob pattern
-                if let Ok(content) = fs::read_to_string(path_pattern).await {
-                    if let Ok(temp_raw) = content.trim().parse::<f32>() {
-                        return Ok(temp_raw / 1000.0);
-                    }
+    /// CPU usage % from /proc/stat deltas between ticks.
+    async fn cpu_usage(&mut self) -> f32 {
+        let Ok((idle, total)) = sysfs::cpu_times().await else {
+            return 0.0;
+        };
+        let usage = match self.prev_cpu_times {
+            Some((pidle, ptotal)) => {
+                let dt = total.saturating_sub(ptotal);
+                let di = idle.saturating_sub(pidle);
+                if dt > 0 {
+                    ((dt - di) as f32 / dt as f32 * 100.0).clamp(0.0, 100.0)
+                } else {
+                    0.0
                 }
             }
-        }
+            None => 0.0,
+        };
+        self.prev_cpu_times = Some((idle, total));
+        usage
+    }
 
-        Err(anyhow::anyhow!("AMD GPU temperature not found"))
+    /// Network rates in kB/s from cumulative byte counters.
+    async fn net_rates(&mut self) -> (f32, f32) {
+        let Ok((rx, tx)) = sysfs::net_bytes().await else {
+            return (0.0, 0.0);
+        };
+        let rates = match self.prev_net_bytes {
+            Some((prx, ptx)) => (
+                rx.saturating_sub(prx) as f32 / 1024.0,
+                tx.saturating_sub(ptx) as f32 / 1024.0,
+            ),
+            None => (0.0, 0.0),
+        };
+        self.prev_net_bytes = Some((rx, tx));
+        rates
     }
 }

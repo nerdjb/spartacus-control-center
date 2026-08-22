@@ -4,6 +4,7 @@
 mod config;
 mod cooling;
 mod ipc;
+mod screen;
 mod telemetry;
 mod usb;
 
@@ -60,6 +61,15 @@ pub struct DaemonState {
     pub fan_rpm: [u16; 6],
     pub cpu_temp: f32,
     pub gpu_temp: f32,
+    pub cpu_usage: f32,
+    pub cpu_freq_ghz: f32,
+    pub gpu_usage: f32,
+    pub ram_used_gb: f32,
+    pub ram_total_gb: f32,
+    pub disk_used_gb: f32,
+    pub disk_total_gb: f32,
+    pub net_up_kbps: f32,
+    pub net_down_kbps: f32,
     pub pump_curve: Vec<(u8, u8)>, // (Temp%, RPM%)
     pub fan_curves: Vec<Vec<(u8, u8)>>,
     pub rgb_enabled: bool,
@@ -74,6 +84,15 @@ impl Default for DaemonState {
             fan_rpm: [0; 6],
             cpu_temp: 0.0,
             gpu_temp: 0.0,
+            cpu_usage: 0.0,
+            cpu_freq_ghz: 0.0,
+            gpu_usage: 0.0,
+            ram_used_gb: 0.0,
+            ram_total_gb: 0.0,
+            disk_used_gb: 0.0,
+            disk_total_gb: 0.0,
+            net_up_kbps: 0.0,
+            net_down_kbps: 0.0,
             pump_curve: vec![(30, 30), (50, 60), (70, 100)],
             fan_curves: vec![vec![(30, 30), (50, 60), (70, 100)]; 6],
             rgb_enabled: true,
@@ -86,6 +105,33 @@ impl Default for DaemonState {
 async fn main() -> Result<()> {
     // Initialize logging
     init_logger();
+
+    // Offline theme preview: --render-theme <name> <out.raw>
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() >= 4 && args[1] == "--render-theme" {
+        let m = screen::Metrics {
+            time: "22:26:51".into(),
+            date: "2026-04-29".into(),
+            cpu_usage: 11.0,
+            cpu_temp: 63.0,
+            cpu_freq_ghz: 3.77,
+            gpu_usage: 8.0,
+            gpu_temp: 45.0,
+            ram_used_gb: 14.1,
+            ram_total_gb: 16.0,
+            disk_used_gb: 192.4,
+            disk_total_gb: 240.0,
+            net_up_kbps: 0.0,
+            net_down_kbps: 0.0,
+            pump_rpm: 1785,
+            fan_rpm: 1300,
+        };
+        let r = screen::ScreenRenderer::new(&args[2])?;
+        let frame = r.render(&m);
+        std::fs::write(&args[3], &frame)?;
+        info!("Rendered theme {} -> {}", args[2], args[3]);
+        return Ok(());
+    }
 
     info!("╔═══════════════════════════════════════════════════╗");
     info!("║  DeepCool Spartacus Control Center - Daemon v0.1  ║");
@@ -108,19 +154,26 @@ async fn main() -> Result<()> {
     });
 
     // Start USB monitor (LCD Display + Controller)
-    let usb_monitor = usb::monitor::USBMonitor::new(state.clone());
+    let theme = config.screen.theme.clone();
+    let refresh_ms = config.screen.refresh_ms;
+    let usb_monitor = usb::monitor::USBMonitor::new(state.clone(), &theme, refresh_ms);
     let usb_handle = tokio::spawn(async move {
-        if let Err(e) = usb_monitor.run().await {
-            error!("USB monitor error: {}", e);
+        match usb_monitor {
+            Ok(mut monitor) => {
+                if let Err(e) = monitor.run().await {
+                    error!("USB monitor error: {}", e);
+                }
+            }
+            Err(e) => {
+                error!("USB monitor init failed: {}", e);
+            }
         }
     });
 
     // Start telemetry collector (CPU, GPU temps, etc.)
     let telemetry_collector = telemetry::collector::TelemetryCollector::new(state.clone());
     let telemetry_handle = tokio::spawn(async move {
-        if let Err(e) = telemetry_collector.run().await {
-            error!("Telemetry collector error: {}", e);
-        }
+        telemetry_collector.run().await;
     });
 
     // Start cooling logic (apply fan curves based on temps)
