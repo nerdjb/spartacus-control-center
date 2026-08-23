@@ -1,93 +1,90 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     viewBox="0 0 512 512">
+  <metadata>
+    <rdf:RDF>
+      <rdf:Description rdf:about="">
+        <dc:title>Spartacus Control Center</dc:title>
+        <dc:creator>nerdjb (https://github.com/nerdjb)</dc:creator>
+        <dc:description>Application icon for the Spartacus Control Center — Linux control suite for DeepCool SPARTACUS AIO coolers.</dc:description>
+        <dc:rights>MIT / GPL v3</dc:rights>
+      </rdf:Description>
+    </rdf:RDF>
+  </metadata>
+
   <defs>
-    <linearGradient id="gradientCoolant" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#00d4ff;stop-opacity:1" />
-      <stop offset="50%" style="stop-color:#0099ff;stop-opacity:1" />
-      <stop offset="100%" style="stop-color:#0050ff;stop-opacity:1" />
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#131a36"/>
+      <stop offset="100%" stop-color="#0a0e22"/>
     </linearGradient>
-    <radialGradient id="glowRGB" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" style="stop-color:#ff0080;stop-opacity:0.8" />
-      <stop offset="50%" style="stop-color:#00ff88;stop-opacity:0.5" />
-      <stop offset="100%" style="stop-color:#0080ff;stop-opacity:0" />
+    <radialGradient id="hub" cx="38%" cy="32%" r="80%">
+      <stop offset="0%" stop-color="#8ff7ff"/>
+      <stop offset="45%" stop-color="#00c8ff"/>
+      <stop offset="100%" stop-color="#0b3ea8"/>
     </radialGradient>
-    <filter id="glowEffect">
-      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+    <filter id="glow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="7" result="b"/>
       <feMerge>
-        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="b"/>
         <feMergeNode in="SourceGraphic"/>
       </feMerge>
     </filter>
-    <filter id="shadowEffect">
-      <feDropShadow dx="2" dy="2" stdDeviation="3" flood-opacity="0.4"/>
+    <filter id="softGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="12"/>
     </filter>
+
+    <!-- RGB ring segments, r=190, three 105-degree arcs -->
+    <path id="seg-cyan"    d="M 289.0 68.9 A 190 190 0 0 1 428.2 336.3"/>
+    <path id="seg-magenta" d="M 401.5 378.1 A 190 190 0 0 1 100.4 365.0"/>
+    <path id="seg-violet"  d="M 77.5 321.0 A 190 190 0 0 1 239.4 66.7"/>
+
+    <!-- Turbine blade arc, r=78, centered at 12 o'clock -->
+    <path id="blade" d="M 231.9 181.8 A 78 78 0 0 1 280.1 181.8"/>
   </defs>
-  
-  <!-- Background -->
-  <rect width="512" height="512" fill="#0a0e27"/>
-  
-  <!-- Main cooler block body -->
-  <g filter="url(#shadowEffect)">
-    <!-- Base block with coolant gradient -->
-    <rect x="96" y="80" width="320" height="280" rx="20" fill="url(#gradientCoolant)" opacity="0.9"/>
-    
-    <!-- Top header with metallic look -->
-    <rect x="96" y="80" width="320" height="50" rx="20" fill="#1a1f3a" stroke="#00d4ff" stroke-width="2"/>
-    
-    <!-- Center coolant chamber (transparent with glow) -->
-    <rect x="120" y="120" width="272" height="200" rx="15" fill="#001a2e" opacity="0.7" stroke="url(#gradientCoolant)" stroke-width="2"/>
-    
-    <!-- Inlet/Outlet ports -->
-    <g>
-      <!-- Left inlet -->
-      <circle cx="110" cy="170" r="12" fill="#0099ff" stroke="#00d4ff" stroke-width="2" filter="url(#glowEffect)"/>
-      <path d="M 95 170 L 110 170" stroke="#0099ff" stroke-width="3" stroke-linecap="round"/>
-      
-      <!-- Right outlet -->
-      <circle cx="402" cy="170" r="12" fill="#ff0080" stroke="#ff0080" stroke-width="2" filter="url(#glowEffect)"/>
-      <path d="M 417 170 L 402 170" stroke="#ff0080" stroke-width="3" stroke-linecap="round"/>
-      
-      <!-- Bottom return -->
-      <circle cx="256" cy="340" r="12" fill="#0099ff" stroke="#00d4ff" stroke-width="2" filter="url(#glowEffect)"/>
-      <path d="M 256 355 L 256 340" stroke="#0099ff" stroke-width="3" stroke-linecap="round"/>
-    </g>
-    
-    <!-- RGB Ring 1 (outer ring - red) -->
-    <circle cx="256" cy="220" r="90" fill="none" stroke="#ff0066" stroke-width="6" opacity="0.4" filter="url(#glowEffect)"/>
-    
-    <!-- RGB Ring 2 (middle ring - green) -->
-    <circle cx="256" cy="220" r="70" fill="none" stroke="#00ff88" stroke-width="6" opacity="0.5" filter="url(#glowEffect)"/>
-    
-    <!-- RGB Ring 3 (inner ring - blue) -->
-    <circle cx="256" cy="220" r="50" fill="none" stroke="#0080ff" stroke-width="6" opacity="0.6" filter="url(#glowEffect)"/>
-    
-    <!-- Center pump icon (heart-like cooling block) -->
-    <g transform="translate(256, 220)">
-      <path d="M 0,-8 Q -6,-14 -12,-14 Q -18,-14 -20,-8 Q -20,-2 0,12 Q 20,-2 20,-8 Q 22,-14 12,-14 Q 6,-14 0,-8 Z" 
-            fill="url(#gradientCoolant)" stroke="#00d4ff" stroke-width="1.5" filter="url(#glowEffect)"/>
-    </g>
-    
-    <!-- Bottom status panel -->
-    <rect x="120" y="350" width="272" height="40" rx="10" fill="#1a1f3a" stroke="#00d4ff" stroke-width="1.5"/>
-    
-    <!-- Status indicators -->
-    <circle cx="150" cy="370" r="5" fill="#00ff88" filter="url(#glowEffect)"/>
-    <circle cx="190" cy="370" r="5" fill="#0080ff" filter="url(#glowEffect)"/>
-    <circle cx="230" cy="370" r="5" fill="#ff0066" filter="url(#glowEffect)"/>
-    <circle cx="270" cy="370" r="5" fill="#ffaa00" filter="url(#glowEffect)"/>
-    <circle cx="310" cy="370" r="5" fill="#00ffff" filter="url(#glowEffect)"/>
-    <circle cx="350" cy="370" r="5" fill="#ff00ff" filter="url(#glowEffect)"/>
+
+  <!-- Background tile -->
+  <rect width="512" height="512" rx="96" fill="url(#bg)"/>
+
+  <!-- Ring track -->
+  <circle cx="256" cy="256" r="190" fill="none" stroke="#1d2648" stroke-width="26"/>
+
+  <!-- RGB ring glow underlay -->
+  <g filter="url(#softGlow)" opacity="0.55">
+    <use href="#seg-cyan"    stroke="#00e5ff" stroke-width="26" fill="none" stroke-linecap="round"/>
+    <use href="#seg-magenta" stroke="#ff2e88" stroke-width="26" fill="none" stroke-linecap="round"/>
+    <use href="#seg-violet"  stroke="#7c4dff" stroke-width="26" fill="none" stroke-linecap="round"/>
   </g>
-  
-  <!-- Outer glow effect -->
-  <circle cx="256" cy="220" r="180" fill="url(#glowRGB)" opacity="0.15" filter="url(#glowEffect)"/>
-  
-  <!-- Text branding (scalable) -->
-  <text x="256" y="420" font-family="Arial, sans-serif" font-size="20" font-weight="bold" 
-        text-anchor="middle" fill="#00d4ff" filter="url(#glowEffect)">
-    SPARTACUS
-  </text>
-  <text x="256" y="450" font-family="Arial, sans-serif" font-size="12" 
-        text-anchor="middle" fill="#00d4ff" opacity="0.7">
-    CONTROL CENTER
-  </text>
+
+  <!-- RGB ring segments -->
+  <g filter="url(#glow)">
+    <use href="#seg-cyan"    stroke="#19e9ff" stroke-width="26" fill="none" stroke-linecap="round"/>
+    <use href="#seg-magenta" stroke="#ff3f92" stroke-width="26" fill="none" stroke-linecap="round"/>
+    <use href="#seg-violet"  stroke="#8a5cff" stroke-width="26" fill="none" stroke-linecap="round"/>
+  </g>
+
+  <!-- Pump cap body -->
+  <circle cx="256" cy="256" r="146" fill="#0e1530" stroke="#243158" stroke-width="3"/>
+  <circle cx="256" cy="256" r="112" fill="#0a1026" stroke="#1c2950" stroke-width="2"/>
+
+  <!-- Turbine blades -->
+  <g stroke="#2c3d72" stroke-width="17" fill="none" stroke-linecap="round">
+    <use href="#blade"/>
+    <use href="#blade" transform="rotate(60 256 256)"/>
+    <use href="#blade" transform="rotate(120 256 256)"/>
+    <use href="#blade" transform="rotate(180 256 256)"/>
+    <use href="#blade" transform="rotate(240 256 256)"/>
+    <use href="#blade" transform="rotate(300 256 256)"/>
+  </g>
+
+  <!-- Hub -->
+  <circle cx="256" cy="256" r="42" fill="url(#hub)" filter="url(#glow)"/>
+  <circle cx="256" cy="256" r="42" fill="none" stroke="#9df6ff" stroke-width="2.5" opacity="0.9"/>
+  <circle cx="256" cy="256" r="15" fill="#06101f"/>
+
+  <!-- Wordmark -->
+  <text x="256" y="497" text-anchor="middle"
+        font-family="DejaVu Sans, Arial, sans-serif" font-size="30" font-weight="bold"
+        letter-spacing="7" fill="#9fb4d8">SPARTACUS</text>
 </svg>

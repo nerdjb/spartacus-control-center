@@ -18,48 +18,53 @@ ICON_SIZES = {
 
 SVG_SOURCE = "assets/spartacus-control.svg"
 
+def render_svg(svg_path: Path, size: int, output_file: Path) -> None:
+    """Render the SVG at the requested size using rsvg-convert or ImageMagick"""
+    try:
+        subprocess.run(
+            ["rsvg-convert", "-w", str(size), "-h", str(size), str(svg_path),
+             "-o", str(output_file)],
+            check=True, capture_output=True)
+        return
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        pass
+
+    subprocess.run(
+        ["convert", "-background", "none", "-density", "384",
+         "-size", f"{size}x{size}", str(svg_path),
+         "-resize", f"{size}x{size}", "-gravity", "center",
+         "-extent", f"{size}x{size}", str(output_file)],
+        check=True, capture_output=True)
+
+
 def generate_icons():
-    """Generate PNG icons from SVG using ImageMagick or Inkscape"""
-    
+    """Generate PNG icons from SVG at multiple resolutions"""
+
     svg_path = Path(SVG_SOURCE)
     if not svg_path.exists():
         print(f"Error: SVG source file not found at {SVG_SOURCE}")
         return False
-    
+
     # Create output directories
     assets_dir = Path("assets")
     for size, subdir in ICON_SIZES.items():
         output_dir = assets_dir / subdir
         output_dir.mkdir(parents=True, exist_ok=True)
-        
+
         output_file = output_dir / "spartacus-control.png"
-        
-        # Try using ImageMagick's convert command
+
+        print(f"Generating {size}x{size} icon...")
         try:
-            cmd = [
-                "convert",
-                "-background", "none",
-                "-density", "384",  # High DPI for quality
-                "-size", f"{size}x{size}",
-                str(svg_path),
-                "-resize", f"{size}x{size}",
-                "-gravity", "center",
-                "-extent", f"{size}x{size}",
-                str(output_file)
-            ]
-            
-            print(f"Generating {size}x{size} icon...")
-            subprocess.run(cmd, check=True, capture_output=True)
+            render_svg(svg_path, size, output_file)
             print(f"  ✓ Created {output_file}")
-            
+        except FileNotFoundError:
+            print("  ✗ Neither rsvg-convert nor ImageMagick 'convert' found.")
+            print("    Install one with: sudo pacman -S librsvg imagemagick")
+            return False
         except subprocess.CalledProcessError as e:
             print(f"  ✗ Error creating {size}x{size} icon: {e}")
             return False
-        except FileNotFoundError:
-            print("  ✗ ImageMagick 'convert' not found. Install it with:")
-            print("    sudo pacman -S imagemagick")
-            return False
-    
+
     return True
 
 def install_icons():
