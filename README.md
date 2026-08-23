@@ -16,17 +16,18 @@ bad sensors show `--`, never fake zeros; spikes are filtered; stale data is labe
 2. [Hardware support](#hardware-support)
 3. [Quick start](#quick-start)
 4. [Installation](#installation)
-5. [Using the app](#using-the-app)
-6. [LCD Studio](#lcd-studio) · [Designing your first screen](#designing-your-first-screen) · [Telemetry bindings reference](#telemetry-bindings-reference) · [Importing LCD-Wiki `.qdt` themes](#importing-lcd-wiki-qdt-themes)
-7. [Live Mode](#live-mode-stream-to-the-panel)
-8. [Telemetry quality system](#telemetry-quality-system)
-9. [Files & formats](#files--formats)
-10. [IPC API reference](#ipc-api-reference)
-11. [Architecture](#architecture)
-12. [Protocol summary](#protocol-summary)
-13. [Safety invariants](#safety-invariants)
-14. [Building from source](#building-from-source) · [Tests](#tests)
-15. [Troubleshooting](#troubleshooting)
+5. [Uninstallation](#uninstallation)
+6. [Using the app](#using-the-app)
+7. [LCD Studio](#lcd-studio) · [Designing your first screen](#designing-your-first-screen) · [Telemetry bindings reference](#telemetry-bindings-reference) · [Importing LCD-Wiki `.qdt` themes](#importing-lcd-wiki-qdt-themes)
+8. [Live Mode](#live-mode-stream-to-the-panel)
+9. [Telemetry quality system](#telemetry-quality-system)
+10. [Files & formats](#files--formats)
+11. [IPC API reference](#ipc-api-reference)
+12. [Architecture](#architecture)
+13. [Protocol summary](#protocol-summary)
+14. [Safety invariants](#safety-invariants)
+15. [Building from source](#building-from-source) · [Tests](#tests)
+16. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -128,6 +129,62 @@ chmod +x ~/.local/bin/spartacus-control-center
 ```
 
 Runtime requirements: `libusb-1.0`, Python ≥ 3.11, `PyQt6`, `Pillow`.
+
+### Uninstallation
+
+**Stop it first** (whatever applies):
+
+```bash
+systemctl --user disable --now spartacus-daemon.service   # if installed as a service
+pkill -f spartacus-daemon                                 # or any manually started daemon
+```
+
+**Installed via PKGBUILD (Arch):**
+
+```bash
+sudo pacman -Rns spartacus-control-center
+```
+
+**Installed via install.sh — use the matching uninstaller:**
+
+```bash
+sudo ./scripts/uninstall.sh            # removes program files, keeps your data
+sudo ./scripts/uninstall.sh --purge    # also wipes configs, curves and caches
+```
+
+The uninstaller stops processes, removes the systemd user unit, `/usr/bin/spartacus-{daemon,control-center}`,
+`/usr/share/spartacus/`, desktop launcher + icons, the udev rule (with reload), and `/etc/spartacus/`
+(only with `--purge`, since it may contain your edits).
+
+**User-local install (~/.local):**
+
+```bash
+rm -f  ~/.local/bin/spartacus-daemon ~/.local/bin/spartacus-control-center
+rm -rf ~/.local/share/spartacus
+```
+
+**Wipe user data & caches (all methods):**
+
+```bash
+rm -rf ~/.config/spartacus     # fan curves (curves.toml), daemon config
+rm -rf ~/.cache/spartacus      # extracted QDT theme assets
+rm -f  ~/.config/Spartacus/ControlCenter.conf   # GUI window preferences
+sudo rm -rf /etc/spartacus     # system daemon config, if present
+```
+
+**Verify nothing is left:**
+
+```bash
+which spartacus-daemon spartacus-control-center   # → nothing found
+ls /usr/share/spartacus /etc/spartacus 2>&1       # → No such file or directory
+systemctl --user status spartacus-daemon          # → could not be found
+lsusb | grep -i 3633                              # cooler itself still listed (that's the device, not us)
+```
+
+After removal the panel reverts to the DeepCool logo within ~15 s and the pump runs on
+the motherboard/firmware default curve — no daemon-side state remains on the device
+except brightness/orientation stored in panel NVM (change them once in Settings before
+uninstalling if you care).
 
 ---
 
