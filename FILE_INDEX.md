@@ -46,24 +46,44 @@ This document lists all generated files and their purposes.
 
 ## 🐍 `/src/gui/` - Python PyQt6 GUI Application
 
-**Purpose**: User-facing control center with dashboard, cooling controls, theme editor
+**Purpose**: User-facing control center with validated telemetry, LCD Studio, QDT import
 
 ### Main Application
 | File | Purpose |
 |------|---------|
 | [main.py](src/gui/main.py) | Application entry point, system tray |
-| [daemon/__init__.py](src/gui/daemon/__init__.py) | Daemon module initialization |
-| [daemon/ipc_client.py](src/gui/daemon/ipc_client.py) | JSON-RPC client (communicates with daemon) |
+| [daemon/ipc_client.py](src/gui/daemon/ipc_client.py) | Compat shim → `core.ipc.client` |
 
-### UI Modules
-| File | Purpose |
+### Core logic (`core/`, Qt-independent unless noted)
+| Path | Purpose |
 |------|---------|
-| [ui/__init__.py](src/gui/ui/__init__.py) | UI module initialization |
-| [ui/main_window.py](src/gui/ui/main_window.py) | Main window with dashboard, tabs |
-| [ui/theme_designer.py](src/gui/ui/theme_designer.py) | Placeholder for LCD theme designer |
-| [ui/tray_icon.py](src/gui/ui/tray_icon.py) | Placeholder for system tray integration |
-| [ui/curve_editor.py](src/gui/ui/curve_editor.py) | Placeholder for fan curve editor |
-| [ui/styles.qss](src/gui/ui/styles.qss) | Dark theme stylesheet (future) |
+| `core/ipc/{protocol,client}.py` | JSON-RPC contract + thread-safe client, `TelemetryWorker` |
+| `core/telemetry/{quality,specs,filters,validator,pipeline}.py` | Validated pipeline (GOOD/STALE/INVALID/OUTLIER/UNAVAILABLE) |
+| `core/telemetry/{model,diagnostics}.py` | Qt signal adapter, diagnostics rows |
+| `core/hardware/curves.py` | Fan-curve math mirroring daemon semantics (pump floor) |
+| `core/lcd/model.py` | `.slayout.json` layout model (text/image/ring/shape/group) |
+| `core/lcd/{renderer,exporter,live}.py` | Exact 480×480 render, JPEG export + send, Live Mode FPS streaming |
+| `core/lcd/{scene,undo}.py` | Studio canvas (multi-select/groups/guides), undo stack |
+| `core/lcd/qdt/{container,parser,mapper,conversion}.py` | LCD Wiki `.qdt` import pipeline |
+
+### UI
+| Path | Purpose |
+|------|---------|
+| `ui/main_window.py` | v2 shell: sidebar, top bar, 7 pages incl. LCD Studio & Diagnostics |
+| `ui/widgets/fan_curve_editor.py` | Draggable fan curve editor with live duty preview |
+| `ui/styles.qss` | Graphite/cyan design system |
+
+### Tests (`tests/`, stdlib unittest)
+| File | Coverage |
+|------|----------|
+| `test_telemetry_pipeline.py` | Validation states, outlier filter, staleness, stats |
+| `test_telemetry_model.py` | Qt adapter signals, badges, LIVE flag |
+| `test_qdt_parser.py` | Container sniffing, parsing, mapping, conversion |
+| `test_undo_and_curves.py` | Undo stack, curve interpolation/sanitization/floor |
+| `test_lcd_renderer.py` | Exact-size frames, baseline JPEG, rotation/opacity |
+| `test_bindings.py` | LCD template strings vs non-GOOD data |
+| `test_ipc_roundtrip.py` | Client ↔ mock daemon over real UNIX socket |
+| `test_full_stack.py` | Real MainWindow + mock daemon end-to-end |
 
 ---
 

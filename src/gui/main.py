@@ -49,17 +49,18 @@ class SpartacusControlCenter(QMainWindow):
         # Setup system tray
         self.setup_tray()
 
-        # Telemetry update timer
-        self.telemetry_timer = QTimer()
-        self.telemetry_timer.timeout.connect(self.update_telemetry)
-        self.telemetry_timer.start(1000)  # Update every 1 second
-
         # Daemon connection checker timer
         self.connection_timer = QTimer()
         self.connection_timer.timeout.connect(self.check_daemon_connection)
         self.connection_timer.start(5000)  # Check every 5 seconds
 
         self.show()
+
+        stylesheet = Path(__file__).parent / "ui" / "styles.qss"
+        if stylesheet.exists():
+            app = QApplication.instance()
+            if app:
+                app.setStyleSheet(stylesheet.read_text())
 
     def load_icon(self) -> QIcon:
         """Load application icon"""
@@ -131,17 +132,19 @@ class SpartacusControlCenter(QMainWindow):
                 self.show_window()
 
     def apply_profile(self, profile: str):
-        """Apply preset cooling profile"""
+        """Apply preset cooling profile through the daemon (manual duties)."""
         profiles = {
-            "silent": {"pump": 40, "fans": [30, 35, 30, 35, 30, 35]},
-            "balanced": {"pump": 60, "fans": [50, 50, 50, 50, 50, 50]},
-            "performance": {"pump": 80, "fans": [70, 75, 70, 75, 70, 75]},
-            "gaming": {"pump": 100, "fans": [100, 100, 100, 100, 100, 100]},
+            "silent": (40, 30, 30, 30),
+            "balanced": (55, 50, 50, 50),
+            "performance": (75, 75, 75, 75),
+            "gaming": (100, 100, 100, 100),
         }
-
         if profile in profiles:
-            settings = profiles[profile]
-            # TODO: Send to daemon via IPC
+            pump, aio, ext1, ext2 = profiles[profile]
+            result = self.ipc_client.set_fans(pump, aio, ext1, ext2)
+            message = (f"{profile.title()} profile applied"
+                       if result else f"{profile.title()} profile unavailable")
+            self.statusBar().showMessage(message)
 
     def check_daemon_connection(self):
         """Check if daemon is reachable"""
@@ -155,14 +158,8 @@ class SpartacusControlCenter(QMainWindow):
                 self.daemon_signals.daemon_disconnected.emit()
 
     def update_telemetry(self):
-        """Update telemetry from daemon"""
-        try:
-            status = self.ipc_client.get_status()
-            if status:
-                self.central_widget.update_status(status)
-                self.daemon_signals.status_updated.emit(status)
-        except Exception as e:
-            pass  # Daemon not connected yet
+        """Compatibility hook; TelemetryWorker owns polling now."""
+        return None
 
     def on_daemon_connected(self):
         """Handle daemon connection"""
@@ -182,8 +179,7 @@ class SpartacusControlCenter(QMainWindow):
 
     def exit_app(self):
         """Exit application"""
-        self.ipc_client.close()
-        self.telemetry_timer.stop()
+        self.central_widget.shutdown()
         self.connection_timer.stop()
         QApplication.quit()
 

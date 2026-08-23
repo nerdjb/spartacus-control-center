@@ -23,6 +23,19 @@ impl FanCurve {
         }
     }
 
+    /// Build a curve from user-supplied (temp, duty%) points.
+    pub fn from_points(points: Vec<(u8, u8)>, hysteresis: u8, smoothing: bool) -> Self {
+        let mut curve = Self::new(1000, 3000);
+        if points.len() >= 2 {
+            let mut sorted = points;
+            sorted.sort_by_key(|(t, _)| *t);
+            curve.points = sorted;
+        }
+        curve.hysteresis = hysteresis;
+        curve.smoothing = smoothing;
+        curve
+    }
+
     /// Calculate target RPM% based on current temperature
     pub fn calculate_speed(&self, current_temp: u8, last_rpm_percent: u8) -> u8 {
         if self.points.is_empty() {

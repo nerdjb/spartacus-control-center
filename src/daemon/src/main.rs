@@ -13,6 +13,7 @@ use log::{error, info, Level, Log, Metadata, Record};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
+use tokio::sync::mpsc;
 
 /// Minimal built-in logger (avoids env_logger's jiff dependency chain).
 struct SimpleLogger {
@@ -74,6 +75,13 @@ pub struct DaemonState {
     pub fan_curves: Vec<Vec<(u8, u8)>>,
     pub rgb_enabled: bool,
     pub rgb_mode: u8,
+    /// GUI LCD takeover: while active (until epoch-ms deadline) the monitor
+    /// suspends its built-in theme stream so Studio/Live frames stay visible.
+    pub lcd_gui_override: bool,
+    pub lcd_gui_override_until_ms: u64,
+    /// Fan control arbitration: true = automatic (curve loop owns duties),
+    /// false = manual (GUI sliders/pump writes own them until a curve apply).
+    pub fan_control_auto: bool,
 }
 
 impl Default for DaemonState {
@@ -97,6 +105,9 @@ impl Default for DaemonState {
             fan_curves: vec![vec![(30, 30), (50, 60), (70, 100)]; 6],
             rgb_enabled: true,
             rgb_mode: 0,
+            lcd_gui_override: false,
+            lcd_gui_override_until_ms: 0,
+            fan_control_auto: true,
         }
     }
 }
@@ -144,9 +155,25 @@ async fn main() -> Result<()> {
 
     // Initialize shared daemon state
     let state = Arc::new(RwLock::new(DaemonState::default()));
+    let (command_tx, command_rx) = mpsc::channel(32);
+    let command_tx_for_cooling = command_tx.clone();
+
+    // Restore persisted fan curves edited through the GUI.
+    {
+        let curves = config::load_curves();
+        let mut state = state.write().await;
+        if curves.pump.len() >= 2 {
+            state.pump_curve = curves.pump;
+        }
+        for (index, points) in curves.fans.into_iter().enumerate().take(6) {
+            if points.len() >= 2 {
+                state.fan_curves[index] = points;
+            }
+        }
+    }
 
     // Start IPC server (UNIX Domain Socket)
-    let ipc_server = ipc::server::IPCServer::new(state.clone());
+    let ipc_server = ipc::server::IPCServer::new(state.clone(), command_tx);
     let ipc_handle = tokio::spawn(async move {
         if let Err(e) = ipc_server.run().await {
             error!("IPC server error: {}", e);
@@ -156,7 +183,7 @@ async fn main() -> Result<()> {
     // Start USB monitor (LCD Display + Controller)
     let theme = config.screen.theme.clone();
     let refresh_ms = config.screen.refresh_ms;
-    let usb_monitor = usb::monitor::USBMonitor::new(state.clone(), &theme, refresh_ms);
+    let usb_monitor = usb::monitor::USBMonitor::new(state.clone(), &theme, refresh_ms, command_rx);
     let usb_handle = tokio::spawn(async move {
         match usb_monitor {
             Ok(mut monitor) => {
@@ -177,7 +204,7 @@ async fn main() -> Result<()> {
     });
 
     // Start cooling logic (apply fan curves based on temps)
-    let cooler = cooling::controller::CoolingController::new(state.clone());
+    let cooler = cooling::controller::CoolingController::new(state.clone(), command_tx_for_cooling);
     let cooling_handle = tokio::spawn(async move {
         if let Err(e) = cooler.run().await {
             error!("Cooling controller error: {}", e);

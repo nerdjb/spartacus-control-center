@@ -37,8 +37,25 @@ The pump cap enumerates as two independent USB devices:
 
 **In progress / planned:**
 
-- PyQt6 GUI polish, theme designer canvas
-- IPC-driven screen themes (daemon currently renders a built-in status dashboard)
+- On-device validation pass of the v2 GUI (LCD Studio send, Live Mode, curve writes)
+
+## GUI v2 (PyQt6)
+
+The GUI is a full hardware suite (see `docs/UPGRADE_PLAN.md` for architecture):
+
+- **Validated telemetry pipeline** (`src/gui/core/telemetry/`) — every metric passes
+  quality validation (GOOD / STALE / INVALID / OUTLIER / UNAVAILABLE). Non-GOOD values
+  render as `--` everywhere: overview cards, LCD bindings, live frames.
+- **LCD Studio** — exact 480×480 canvas with zoom/grid/snap, multi-select + grouping +
+  alignment guides, inspector (rotation, opacity, fonts, ring gauges bound to validated
+  metrics), undo/redo (`Ctrl+Z`/`Ctrl+Y`), layer management, six built-in templates,
+  realistic pump-block preview, and `.qdt` (LCD Wiki) import via
+  `core/lcd/qdt/` (ZIP/gzip/binary-carve container reader + telemetry variable mapper).
+- **Live Mode** — streams rendered frames to the panel at 15/30/60 FPS off the GUI thread.
+- **Fan curve editor** — draggable temperature→PWM curves per channel; the daemon stores
+  (`~/.config/spartacus/curves.toml`), enforces the 40% pump floor, and evaluates them.
+- **Daemon LCD takeover** — `SendLcdFrame` suspends the built-in theme stream for 20 s
+  so Studio/Live content stays on screen; the dashboard resumes automatically.
 
 ## Architecture
 
@@ -156,6 +173,16 @@ python main.py
 ```
 
 Requires Python 3.11+, PyQt6, and the daemon running (IPC socket `$XDG_RUNTIME_DIR/spartacus.sock`).
+
+## Tests
+
+```bash
+# Python — pipeline, QDT import, undo, curve math, IPC round-trip, full-stack GUI:
+python3 -m unittest discover -s tests
+
+# Rust — checksum golden vectors, curve parsing, LCD override gate:
+cd src/daemon && cargo test
+```
 
 ## License
 

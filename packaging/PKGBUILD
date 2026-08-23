@@ -14,6 +14,7 @@ depends=(
     'hidapi'
     'python>=3.9'
     'python-pyqt6'
+    'python-pillow'
     'systemd-libs'
 )
 makedepends=(
@@ -55,10 +56,12 @@ package() {
     # Install daemon binary
     install -Dm755 target/release/spartacus-daemon "${pkgdir}/usr/bin/spartacus-daemon"
 
-    # Install GUI
+    # Install GUI (full package tree: entry point, ui/, core/, daemon shim)
     install -Dm755 src/gui/main.py "${pkgdir}/usr/share/spartacus/main.py"
-    install -Dm755 src/gui/ui/*.py "${pkgdir}/usr/share/spartacus/ui/"
-    install -Dm755 src/gui/daemon/*.py "${pkgdir}/usr/share/spartacus/daemon/"
+    cp -r src/gui/ui "${pkgdir}/usr/share/spartacus/ui"
+    cp -r src/gui/core "${pkgdir}/usr/share/spartacus/core"
+    cp -r src/gui/daemon "${pkgdir}/usr/share/spartacus/daemon"
+    find "${pkgdir}/usr/share/spartacus" -name '__pycache__' -type d -exec rm -rf {} +
 
     # Install launcher script
     mkdir -p "${pkgdir}/usr/bin"

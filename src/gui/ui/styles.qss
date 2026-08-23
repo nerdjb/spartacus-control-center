@@ -1,0 +1,271 @@
+/* ==========================================================================
+   SPARTACUS Control Center — Design System
+   Tokens: bg #121417 · panel #1B1E23 · border #2A2E35
+   Accents: cyan #00F0FF · blue #0066FF · purple #8A2BE2 · green #00FF66
+   Quality: GOOD #00FF66 · STALE #FFB454 · INVALID #FF4D5E
+            OUTLIER #B26BFF · UNAVAILABLE #5C6470
+   ========================================================================== */
+
+* {
+    font-family: "Inter", "DejaVu Sans", "Noto Sans", sans-serif;
+    outline: none;
+}
+
+QWidget {
+    background-color: #121417;
+    color: #E8EAED;
+    font-size: 13px;
+}
+
+/* ---------- Sidebar & navigation ---------- */
+
+#Sidebar {
+    background-color: #14171B;
+    border-right: 1px solid #2A2E35;
+}
+
+QPushButton[navButton="true"] {
+    background-color: transparent;
+    color: #9AA3AD;
+    text-align: left;
+    padding: 12px 18px;
+    border: none;
+    border-left: 3px solid transparent;
+    font-size: 13px;
+    letter-spacing: 0.4px;
+}
+
+QPushButton[navButton="true"]:hover {
+    color: #E8EAED;
+    background-color: #1B1E23;
+}
+
+QPushButton[navButton="true"]:checked {
+    color: #00F0FF;
+    background-color: #1B1E23;
+    border-left: 3px solid #00F0FF;
+}
+
+/* ---------- Top bar ---------- */
+
+#TopBar {
+    background-color: #14171B;
+    border-bottom: 1px solid #2A2E35;
+}
+
+#BrandTitle {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: #FFFFFF;
+}
+
+#DeviceName {
+    color: #5C6470;
+    font-size: 11px;
+    letter-spacing: 1.2px;
+}
+
+QLabel[pill="connected"] {
+    color: #00FF66;
+    background-color: rgba(0, 255, 102, 0.08);
+    border: 1px solid rgba(0, 255, 102, 0.25);
+    border-radius: 10px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+QLabel[pill="disconnected"] {
+    color: #FF4D5E;
+    background-color: rgba(255, 77, 94, 0.08);
+    border: 1px solid rgba(255, 77, 94, 0.30);
+    border-radius: 10px;
+    padding: 3px 10px;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+/* ---------- Cards ---------- */
+
+QFrame[card="true"] {
+    background-color: #1B1E23;
+    border: 1px solid #2A2E35;
+    border-radius: 8px;
+}
+
+#CardTitle {
+    color: #5C6470;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.6px;
+}
+
+#MetricValue {
+    font-size: 32px;
+    font-weight: 700;
+    color: #FFFFFF;
+}
+
+#MetricUnit {
+    font-size: 13px;
+    color: #9AA3AD;
+    font-weight: 400;
+}
+
+/* ---------- Quality badges ---------- */
+
+QLabel[quality="GOOD"]        { color: #00FF66; font-size: 11px; }
+QLabel[quality="STALE"]       { color: #FFB454; font-size: 11px; }
+QLabel[quality="INVALID"]     { color: #FF4D5E; font-size: 11px; }
+QLabel[quality="OUTLIER"]     { color: #B26BFF; font-size: 11px; }
+QLabel[quality="UNAVAILABLE"] { color: #5C6470; font-size: 11px; }
+
+/* ---------- Buttons ---------- */
+
+QPushButton {
+    background-color: #22262D;
+    border: 1px solid #2A2E35;
+    border-radius: 6px;
+    padding: 8px 16px;
+    color: #E8EAED;
+    font-weight: 500;
+}
+
+QPushButton:hover {
+    background-color: #272C34;
+    border-color: #3A404A;
+}
+
+QPushButton:pressed {
+    background-color: #1B1E23;
+}
+
+QPushButton:disabled {
+    color: #5C6470;
+    background-color: #191C21;
+}
+
+QPushButton[accent="primary"] {
+    background-color: rgba(0, 240, 255, 0.10);
+    border: 1px solid rgba(0, 240, 255, 0.45);
+    color: #00F0FF;
+    font-weight: 700;
+    letter-spacing: 0.6px;
+}
+
+QPushButton[accent="primary"]:hover {
+    background-color: rgba(0, 240, 255, 0.18);
+}
+
+QPushButton[accent="primary"]:disabled {
+    color: #3A5560;
+    border-color: #24343A;
+    background-color: rgba(0, 240, 255, 0.04);
+}
+
+QPushButton[danger="true"] {
+    border: 1px solid rgba(255, 77, 94, 0.45);
+    color: #FF4D5E;
+}
+
+/* ---------- Inputs ---------- */
+
+QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox {
+    background-color: #16191E;
+    border: 1px solid #2A2E35;
+    border-radius: 6px;
+    padding: 6px 10px;
+    selection-background-color: #0066FF;
+}
+
+QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus {
+    border: 1px solid #00F0FF;
+}
+
+QComboBox::drop-down { border: none; width: 22px; }
+
+QSlider::groove:horizontal {
+    height: 4px;
+    background: #2A2E35;
+    border-radius: 2px;
+}
+
+QSlider::sub-page:horizontal {
+    background: qlineargradient(x1:0, y1:0, x2:1, y2:0,
+                stop:0 #0066FF, stop:1 #00F0FF);
+    border-radius: 2px;
+}
+
+QSlider::handle:horizontal {
+    background: #E8EAED;
+    width: 14px;
+    height: 14px;
+    margin: -5px 0;
+    border-radius: 7px;
+}
+
+/* ---------- Tables / lists ---------- */
+
+QTableView, QListWidget {
+    background-color: #16191E;
+    alternate-background-color: #191D22;
+    border: 1px solid #2A2E35;
+    border-radius: 8px;
+    gridline-color: #23272E;
+}
+
+QHeaderView::section {
+    background-color: #1B1E23;
+    color: #5C6470;
+    border: none;
+    border-bottom: 1px solid #2A2E35;
+    padding: 8px;
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 1.2px;
+}
+
+QListWidget::item { padding: 6px 10px; }
+QListWidget::item:selected {
+    background-color: rgba(138, 43, 226, 0.22);
+    color: #E8EAED;
+}
+
+/* ---------- Scrollbars ---------- */
+
+QScrollBar:vertical {
+    background: transparent;
+    width: 10px;
+    margin: 0;
+}
+
+QScrollBar::handle:vertical {
+    background: #2A2E35;
+    border-radius: 5px;
+    min-height: 30px;
+}
+
+QScrollBar::handle:vertical:hover { background: #3A404A; }
+QScrollBar::add-line, QScrollBar::sub-line { height: 0; width: 0; }
+QScrollBar::add-page, QScrollBar::sub-page { background: transparent; }
+
+/* ---------- Tabs (legacy pages) ---------- */
+
+QTabWidget::pane {
+    border: 1px solid #2A2E35;
+    border-radius: 8px;
+    top: -1px;
+}
+
+QTabBar::tab {
+    background: transparent;
+    color: #9AA3AD;
+    padding: 10px 18px;
+    border-bottom: 2px solid transparent;
+}
+
+QTabBar::tab:selected {
+    color: #00F0FF;
+    border-bottom: 2px solid #00F0FF;
+}

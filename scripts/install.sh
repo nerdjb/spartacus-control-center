@@ -25,10 +25,14 @@ echo "✓ Installed: /usr/bin/spartacus-daemon"
 
 # Install GUI files
 echo "[2/5] Installing GUI files..."
-mkdir -p /usr/share/spartacus/{ui,daemon}
+mkdir -p /usr/share/spartacus/{ui,daemon,core,assets}
 cp -r "$PROJECT_DIR/src/gui"/*.py /usr/share/spartacus/
 cp -r "$PROJECT_DIR/src/gui/ui"/*.py /usr/share/spartacus/ui/
+cp -r "$PROJECT_DIR/src/gui/ui"/*.qss /usr/share/spartacus/ui/
+mkdir -p /usr/share/spartacus/ui/widgets
+cp -r "$PROJECT_DIR/src/gui/ui/widgets"/*.py /usr/share/spartacus/ui/widgets/
 cp -r "$PROJECT_DIR/src/gui/daemon"/*.py /usr/share/spartacus/daemon/
+cp -r "$PROJECT_DIR/src/gui/core" /usr/share/spartacus/
 
 # Install launcher wrapper
 cat > /usr/bin/spartacus-control-center << 'EOF'

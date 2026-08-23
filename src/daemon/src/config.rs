@@ -136,3 +136,50 @@ pub async fn load_config() -> Result<Config> {
     log::info!("No config file found, using defaults");
     Ok(Config::default())
 }
+
+// -- persisted fan curves -------------------------------------------------------
+//
+// Fan curves edited in the GUI are stored separately from the static daemon
+// config so IPC writes never rewrite /etc-managed settings.
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+pub struct CurvesFile {
+    #[serde(default)]
+    pub pump: Vec<(u8, u8)>,
+    #[serde(default)]
+    pub fans: Vec<Vec<(u8, u8)>>,
+}
+
+fn curves_path() -> PathBuf {
+    PathBuf::from(format!(
+        "{}/.config/spartacus/curves.toml",
+        std::env::var("HOME").unwrap_or_default()
+    ))
+}
+
+/// Blocking read of a tiny TOML file at startup.
+pub fn load_curves() -> CurvesFile {
+    let path = curves_path();
+    match std::fs::read_to_string(&path) {
+        Ok(contents) => match toml::from_str(&contents) {
+            Ok(curves) => curves,
+            Err(e) => {
+                log::warn!("Invalid curves file {:?}: {}", path, e);
+                CurvesFile::default()
+            }
+        },
+        Err(_) => CurvesFile::default(),
+    }
+}
+
+pub async fn save_curves(pump: Vec<(u8, u8)>, fans: Vec<Vec<(u8, u8)>>) -> Result<()> {
+    let path = curves_path();
+    if let Some(parent) = path.parent() {
+        fs::create_dir_all(parent).await?;
+    }
+    let curves = CurvesFile { pump, fans };
+    let contents = toml::to_string_pretty(&curves)?;
+    fs::write(&path, contents).await?;
+    log::info!("Saved fan curves to {:?}", path);
+    Ok(())
+}

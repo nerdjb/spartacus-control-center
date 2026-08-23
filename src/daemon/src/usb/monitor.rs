@@ -12,12 +12,30 @@ use anyhow::Result;
 use log::{info, warn};
 use std::sync::Arc;
 use tokio::sync::RwLock;
+use tokio::sync::mpsc::Receiver;
 use tokio::time::{interval, Duration};
 
 use super::controller::ControllerDevice;
 use super::lcd::LCDDevice;
+use crate::ipc::DaemonCommand;
 
 const FRAME_QUALITY: u8 = 88;
+
+/// Pure gate for the theme stream, unit-testable:
+/// override active and unexpired ⇒ hold; expired ⇒ clear and resume.
+fn should_push_theme(override_active: bool, until_ms: u64, now_ms: u64) -> bool {
+    if !override_active {
+        return true;
+    }
+    now_ms >= until_ms
+}
+
+fn now_epoch_ms() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
 
 pub struct USBMonitor {
     state: Arc<RwLock<DaemonState>>,
@@ -25,6 +43,7 @@ pub struct USBMonitor {
     controller: ControllerDevice,
     renderer: ScreenRenderer,
     refresh_ms: u64,
+    commands: Receiver<DaemonCommand>,
 }
 
 impl USBMonitor {
@@ -32,6 +51,7 @@ impl USBMonitor {
         state: Arc<RwLock<DaemonState>>,
         theme: &str,
         refresh_ms: u64,
+        commands: Receiver<DaemonCommand>,
     ) -> Result<Self> {
         Ok(Self {
             state,
@@ -39,6 +59,7 @@ impl USBMonitor {
             controller: ControllerDevice::new(),
             renderer: ScreenRenderer::new(theme)?,
             refresh_ms,
+            commands,
         })
     }
 
@@ -66,6 +87,48 @@ impl USBMonitor {
                         warn!("Screen refresh failed: {}", e);
                     }
                 }
+
+                Some(command) = self.commands.recv() => {
+                    self.handle_command(command).await;
+                }
+            }
+        }
+    }
+
+    async fn handle_command(&mut self, command: DaemonCommand) {
+        match command {
+            DaemonCommand::SendLcdFrame { jpeg, reply } => {
+                let result = self.lcd.send_jpeg_frame(&jpeg).await.map_err(|e| e.to_string());
+                let _ = reply.send(result);
+            }
+            DaemonCommand::LcdKeepalive { reply } => {
+                let result = self.lcd.keepalive().await.map_err(|e| e.to_string());
+                let _ = reply.send(result);
+            }
+            DaemonCommand::LcdSetConfig { orientation, brightness, reply } => {
+                let result = self.lcd.set_display(orientation, brightness).await.map_err(|e| e.to_string());
+                let _ = reply.send(result);
+            }
+            DaemonCommand::SetFans { pump, aio, ext1, ext2, ramp, reply } => {
+                let result = self.controller.set_fans(pump, aio, ext1, ext2, ramp).await.map_err(|e| e.to_string());
+                let _ = reply.send(result);
+            }
+            DaemonCommand::SetFanSpeed { channel, speed, reply } => {
+                let result = self.controller.set_channel_speed(channel, speed).await.map_err(|e| e.to_string());
+                let _ = reply.send(result);
+            }
+            DaemonCommand::SetLighting { mode, color, speed, saturation, reply } => {
+                let result = match mode.to_lowercase().as_str() {
+                    "rainbow" => self.controller.set_rainbow(speed, saturation).await,
+                    "breathing" | "temperature reactive" => self.controller.set_breathing(color, speed).await,
+                    "off" => self.controller.set_always_on([0, 0, 0]).await,
+                    _ => self.controller.set_always_on(color).await,
+                }.map_err(|e| e.to_string());
+                let _ = reply.send(result);
+            }
+            DaemonCommand::SetMotherboardSync { enable, reply } => {
+                let result = self.controller.motherboard_sync(enable).await.map_err(|e| e.to_string());
+                let _ = reply.send(result);
             }
         }
     }
@@ -110,7 +173,11 @@ impl USBMonitor {
     }
 
     /// Snapshot daemon state into themed metrics and stream the frame.
+    /// Suspended while GUI-sent content (Studio send / Live Mode) is fresh.
     async fn push_theme_frame(&mut self) -> Result<()> {
+        if !self.theme_stream_allowed() {
+            return Ok(());
+        }
         let metrics = {
             let state = self.state.read().await;
             screen::snapshot(&state)
@@ -120,8 +187,45 @@ impl USBMonitor {
         Ok(())
     }
 
+    /// Pure decision helper: may the built-in theme stream push right now?
+    fn theme_stream_allowed(&self) -> bool {
+        let state = {
+            // Use try_read so a blocked writer never stalls the USB loop.
+            match self.state.try_read() {
+                Ok(state) => state,
+                Err(_) => return true,
+            }
+        };
+        should_push_theme(
+            state.lcd_gui_override,
+            state.lcd_gui_override_until_ms,
+            now_epoch_ms(),
+        )
+    }
+
     async fn set_usb_connected(&self, connected: bool) {
         let mut state = self.state.write().await;
         state.usb_connected = connected;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::should_push_theme;
+
+    #[test]
+    fn theme_pushes_when_no_override() {
+        assert!(should_push_theme(false, 0, 1_000));
+    }
+
+    #[test]
+    fn override_holds_fresh_gui_frames() {
+        assert!(!should_push_theme(true, 21_000, 5_000));
+        assert!(!should_push_theme(true, 21_000, 20_999));
+    }
+
+    #[test]
+    fn override_expires_and_theme_resumes() {
+        assert!(should_push_theme(true, 21_000, 21_000));
     }
 }

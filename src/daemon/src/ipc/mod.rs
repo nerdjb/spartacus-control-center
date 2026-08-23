@@ -7,6 +7,8 @@ pub use server::IPCServer;
 
 // JSON-RPC request/response structures
 use serde::{Deserialize, Serialize};
+use tokio::sync::mpsc;
+use tokio::sync::oneshot;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct JsonRpcRequest {
@@ -39,7 +41,30 @@ pub struct DaemonStatus {
     pub cpu_temp: f32,
     pub gpu_temp: f32,
     pub rgb_enabled: bool,
+    pub cpu_usage: f32,
+    pub cpu_freq_ghz: f32,
+    pub gpu_usage: f32,
+    pub ram_used_gb: f32,
+    pub ram_total_gb: f32,
+    pub disk_used_gb: f32,
+    pub disk_total_gb: f32,
+    pub net_up_kbps: f32,
+    pub net_down_kbps: f32,
+    pub fan_control_auto: bool,
 }
+
+#[derive(Debug)]
+pub enum DaemonCommand {
+    SendLcdFrame { jpeg: Vec<u8>, reply: oneshot::Sender<Result<(), String>> },
+    LcdKeepalive { reply: oneshot::Sender<Result<(), String>> },
+    LcdSetConfig { orientation: u8, brightness: u8, reply: oneshot::Sender<Result<(), String>> },
+    SetFans { pump: u8, aio: u8, ext1: u8, ext2: u8, ramp: u8, reply: oneshot::Sender<Result<(), String>> },
+    SetFanSpeed { channel: usize, speed: u8, reply: oneshot::Sender<Result<(), String>> },
+    SetLighting { mode: String, color: [u8; 3], speed: u8, saturation: u8, reply: oneshot::Sender<Result<(), String>> },
+    SetMotherboardSync { enable: bool, reply: oneshot::Sender<Result<(), String>> },
+}
+
+pub type CommandSender = mpsc::Sender<DaemonCommand>;
 
 // Available JSON-RPC methods
 pub enum RPCMethod {
@@ -49,6 +74,15 @@ pub enum RPCMethod {
     SetRGBMode,
     GetConfig,
     SetConfig,
+    GetTelemetry,
+    GetDiagnostics,
+    SendLcdFrame,
+    LcdKeepalive,
+    LcdSetConfig,
+    SetFans,
+    SetFanCurve,
+    SetLighting,
+    SetMotherboardSync,
 }
 
 impl RPCMethod {
@@ -60,6 +94,15 @@ impl RPCMethod {
             "SetRGBMode" => Some(Self::SetRGBMode),
             "GetConfig" => Some(Self::GetConfig),
             "SetConfig" => Some(Self::SetConfig),
+            "GetTelemetry" => Some(Self::GetTelemetry),
+            "GetDiagnostics" => Some(Self::GetDiagnostics),
+            "SendLcdFrame" => Some(Self::SendLcdFrame),
+            "LcdKeepalive" => Some(Self::LcdKeepalive),
+            "LcdSetConfig" => Some(Self::LcdSetConfig),
+            "SetFans" => Some(Self::SetFans),
+            "SetFanCurve" => Some(Self::SetFanCurve),
+            "SetLighting" => Some(Self::SetLighting),
+            "SetMotherboardSync" => Some(Self::SetMotherboardSync),
             _ => None,
         }
     }
