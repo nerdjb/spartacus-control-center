@@ -1,6 +1,6 @@
 [package]
 name = "spartacus-daemon"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 description = "DeepCool Spartacus USB control daemon for Linux"
 license = "MIT OR GPL-3.0-only"

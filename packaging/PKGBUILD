@@ -3,7 +3,7 @@
 # Or publish to AUR
 
 pkgname=spartacus-control-center
-pkgver=0.1.0
+pkgver=0.2.0
 pkgrel=1
 pkgdesc="DeepCool Spartacus 360/420 Liquid Cooler Control Center for Linux"
 arch=('x86_64')
