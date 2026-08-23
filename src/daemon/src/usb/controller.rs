@@ -21,8 +21,10 @@
 //
 // Safety notes:
 //   - The pump cools the CPU: treat duty below ~40% as unsafe.
-//   - Reading status requires sending a report; passive polls send a neutral
-//     "all channels to motherboard" report so monitoring never changes state.
+//   - Reading status requires sending a report; a poll solicited with the
+//     retained report re-sends the state we already own (no-op), while a
+//     neutralized poll hands everything to the motherboard — only correct
+//     before we have taken control.
 
 use anyhow::{anyhow, Result};
 use log::{debug, info, warn};
@@ -131,6 +133,12 @@ pub struct ControllerDevice {
     pub connected: bool,
     report: LinkerReport,
     handle: Option<DeviceHandle<Context>>,
+    /// True once we deliberately wrote a control report (fan takeover or
+    /// motherboard hand-over). Governs how tachometry polls are solicited.
+    owns_control: bool,
+    /// Encoded form of the last transmitted control report; lets us skip
+    /// redundant writes (the curve loop re-applies every second).
+    last_transmitted: Option<[u8; REPORT_LEN]>,
 }
 
 impl ControllerDevice {
@@ -142,6 +150,8 @@ impl ControllerDevice {
             connected: false,
             report: LinkerReport::default(),
             handle: None,
+            owns_control: false,
+            last_transmitted: None,
         }
     }
 
@@ -170,22 +180,46 @@ impl ControllerDevice {
             let _ = handle.release_interface(0);
         }
         self.connected = false;
+        self.owns_control = false;
+        self.last_transmitted = None;
         Ok(())
     }
 
-    /// Poll tachometry passively: solicits with a neutral report so pump duty,
-    /// fan duty, or lighting can never change as a side effect.
+    /// Poll tachometry without disturbing the current control state.
+    ///
+    /// Every poll IS a full control write (the device only replies when
+    /// solicited), so the report used to solicit matters:
+    ///  - once we own control, solicit with the **retained** report — it is a
+    ///    no-op re-send and cannot flip anything;
+    ///  - before any takeover, solicit with the neutralized variant — the
+    ///    documented safe monitoring posture (everything to motherboard).
+    /// Soliciting neutralized while also driving fans would hand lighting back
+    /// to the motherboard between our own writes, visibly toggling ARGB.
     pub async fn read_rpm_passive(&mut self) -> Result<RPMData> {
-        let neutral = self.report.neutralized().encode([0; 4]);
-        let status = self.transfer(&neutral).await?;
+        let solicited = poll_report(&self.report, self.owns_control);
+        debug!(
+            "RPM poll solicit: owned={} effect={:#04x} fan_sync={:#04x}",
+            self.owns_control,
+            solicited[6],
+            solicited[16]
+        );
+        let status = self.transfer(&solicited).await?;
         Ok(decode_status(&status))
     }
 
     /// Send the retained control report (software takeover).
-    pub async fn apply_control(&mut self) -> Result<()> {
+    /// Returns Ok(true) when a transfer happened, Ok(false) when skipped as
+    /// a no-op (device already holds exactly this state).
+    pub async fn apply_control(&mut self) -> Result<bool> {
         let encoded = self.report.encode([0; 4]);
+        if self.owns_control && self.last_transmitted == Some(encoded) {
+            debug!("Skipping no-op Linker control write");
+            return Ok(false);
+        }
         self.transfer(&encoded).await?;
-        Ok(())
+        self.owns_control = true;
+        self.last_transmitted = Some(encoded);
+        Ok(true)
     }
 
     /// Set all four duties (0..100%) at once. Refuses pump duty < 40%.
@@ -208,8 +242,10 @@ impl ControllerDevice {
             channel[1] = ramp;
             channel[2] = SOURCE_SOFTWARE;
         }
-        self.apply_control().await?;
-        info!("Fan duties set: pump={pump}% aio={aio}% ext1={ext1}% ext2={ext2}% ramp={ramp}");
+        let applied = self.apply_control().await?;
+        if applied {
+            info!("Fan duties set: pump={pump}% aio={aio}% ext1={ext1}% ext2={ext2}% ramp={ramp}");
+        }
         Ok(())
     }
 
@@ -393,5 +429,52 @@ pub struct RPMData {
 impl Default for ControllerDevice {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+/// Which report a tachometry poll should be solicited with.
+/// Pure so the ownership rule stays unit-testable without hardware.
+fn poll_report(report: &LinkerReport, owns_control: bool) -> [u8; REPORT_LEN] {
+    if owns_control {
+        report.encode([0; 4])
+    } else {
+        report.neutralized().encode([0; 4])
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn unowned_poll_solicits_neutral_motherboard_state() {
+        let report = LinkerReport::default();
+        let pkt = poll_report(&report, false);
+        assert_eq!(pkt[6], EFFECT_MOTHERBOARD); // lighting → motherboard
+        assert_eq!(pkt[16], SOURCE_MOTHERBOARD); // fan sync flag
+        for ch in 0..3 {
+            assert_eq!(pkt[17 + ch * 3 + 2], SOURCE_MOTHERBOARD);
+        }
+        // Asymmetric table: EXT2 keeps software source (spec §5.4)
+        assert_eq!(pkt[17 + 3 * 3 + 2], SOURCE_SOFTWARE);
+        assert_eq!(pkt[37], sum8(&pkt[1..37]));
+    }
+
+    #[test]
+    fn owned_poll_solicits_retained_state_unchanged() {
+        let mut report = LinkerReport::default();
+        report.channels[0][0] = 64;
+        report.effect = EFFECT_ALWAYS_ON;
+        let pkt = poll_report(&report, true);
+        assert_eq!(pkt, report.encode([0; 4])); // identical re-send: no flip
+    }
+
+    #[test]
+    fn owned_and_unowned_polls_differ_in_effect_byte() {
+        let report = LinkerReport::default();
+        assert_ne!(
+            poll_report(&report, true)[6],
+            poll_report(&report, false)[6]
+        );
     }
 }
