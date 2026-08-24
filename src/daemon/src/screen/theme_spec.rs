@@ -467,7 +467,6 @@ fn draw_widget(
 // ---------------------------------------------------------------- built-ins
 
 pub const AURORA_JSON: &str = include_str!("themes/aurora.json");
-pub const SLATE_JSON: &str = include_str!("themes/slate.json");
 
 /// Parse a spec from JSON text.
 pub fn parse_spec(json: &str) -> Result<ThemeSpec, String> {

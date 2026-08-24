@@ -68,8 +68,14 @@ pub async fn cpu_times() -> Result<(u64, u64)> {
 }
 
 /// GPU (temperature C, usage %): amdgpu sysfs first, nvidia-smi fallback.
+///
+/// Multi-GPU systems expose several amdgpu hwmons and drm cards. The real
+/// dGPU is the one with a `power1_average` sensor; usage is the max across
+/// all cards so an idle iGPU never masks the busy dGPU.
 pub async fn gpu_telemetry() -> Option<(f32, f32)> {
     if let Ok(mut entries) = fs::read_dir("/sys/class/hwmon").await {
+        let mut fallback: Option<f32> = None;
+        let mut picked: Option<f32> = None;
         while let Ok(Some(entry)) = entries.next_entry().await {
             let name = fs::read_to_string(entry.path().join("name"))
                 .await
@@ -77,13 +83,21 @@ pub async fn gpu_telemetry() -> Option<(f32, f32)> {
             if !name.trim().eq_ignore_ascii_case("amdgpu") {
                 continue;
             }
-            if let Some(temp) = read_milli_degrees(&entry.path().join("temp1_input").to_string_lossy()).await {
-                let usage = fs::read_to_string("/sys/class/drm/card0/device/gpu_busy_percent")
-                    .await
-                    .ok()
-                    .and_then(|c| c.trim().parse::<f32>().ok());
-                return Some((temp, usage.unwrap_or(0.0)));
+            let temp =
+                read_milli_degrees(&entry.path().join("temp1_input").to_string_lossy()).await;
+            let is_dgpu = entry.path().join("power1_average").exists();
+            if is_dgpu && temp.is_some() {
+                picked = temp;
+            } else if fallback.is_none() {
+                fallback = temp;
             }
+        }
+        if picked.is_none() {
+            picked = fallback;
+        }
+        if let Some(temp) = picked {
+            let usage = max_gpu_busy().await;
+            return Some((temp, usage.unwrap_or(0.0)));
         }
     }
 
@@ -161,6 +175,26 @@ pub async fn net_bytes() -> Result<(u64, u64)> {
 }
 
 // ---------------------------------------------------------------- power
+
+/// Busiest AMD card's gpu_busy_percent (multi-GPU: never read the idle one).
+async fn max_gpu_busy() -> Option<f32> {
+    let mut best: Option<f32> = None;
+    if let Ok(mut entries) = fs::read_dir("/sys/class/drm").await {
+        while let Ok(Some(entry)) = entries.next_entry().await {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if !name.starts_with("card") || !name[4..].chars().all(|c| c.is_ascii_digit()) {
+                continue;
+            }
+            let path = entry.path().join("device/gpu_busy_percent");
+            if let Ok(raw) = fs::read_to_string(path).await {
+                if let Ok(v) = raw.trim().parse::<f32>() {
+                    best = Some(best.map_or(v, |b| b.max(v)));
+                }
+            }
+        }
+    }
+    best
+}
 
 /// GPU power draw in watts: amdgpu exposes `power1_average` (microwatts).
 /// Fallback: NVIDIA `nvidia-smi --query-gpu=power.draw`.

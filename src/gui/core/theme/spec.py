@@ -123,12 +123,16 @@ class ThemeSpec:
 
 
 def builtin_specs() -> dict[str, ThemeSpec]:
-    """All shipped spec themes, as editable starting points."""
-    root = Path(__file__).resolve().parent / "themes"
+    """Shipped spec themes + anything saved in the user themes folder."""
     out: dict[str, ThemeSpec] = {}
-    for path in sorted(root.glob("*.json")):
-        try:
-            out[path.stem] = ThemeSpec.load(path)
-        except Exception:
-            pass
+    roots = [Path(__file__).resolve().parent / "themes",
+             Path.home() / ".config" / "spartacus" / "themes"]
+    for root in roots:
+        if not root.is_dir():
+            continue
+        for path in sorted(root.glob("*.json")):
+            try:
+                out[path.stem] = ThemeSpec.load(path)
+            except Exception:
+                pass
     return out
