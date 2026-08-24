@@ -227,7 +227,7 @@
    "size": 16,
    "fill": "#A8899A",
    "align": "center",
-   "text": "SSD"
+   "text": "FPS"
   },
   {
    "kind": "text",
@@ -236,7 +236,7 @@
    "size": 34,
    "fill": "#F8F0F4",
    "align": "center",
-   "text": "{disk_pct:.0}%"
+   "text": "{fps:.0}"
   },
   {
    "kind": "bar",
@@ -246,9 +246,9 @@
    "h": 8,
    "track": "#45323D",
    "fill": "#FF4D94",
-   "binding": "disk_pct",
+   "binding": "fps",
    "min": 0,
-   "max": 100
+   "max": 240
   },
   {
    "kind": "text",
@@ -257,7 +257,7 @@
    "size": 14,
    "fill": "#C4A3B5",
    "align": "center",
-   "text": "{disk_used:.0}/{disk_total:.0} GB"
+   "text": "{frametime:.1} ms frame time"
   },
   {
    "kind": "text",
@@ -266,7 +266,7 @@
    "size": 12,
    "fill": "#A8899A",
    "align": "center",
-   "text": "Free {disk_free:.0} GB"
+   "text": "frames per second"
   },
   {
    "kind": "panel",

@@ -238,8 +238,9 @@ fn binding_value(m: &Metrics, key: &str) -> Option<Val> {
         "cpu_watts" if m.cpu_watts > 0.5 => Val::Num(m.cpu_watts),
         "gpu_watts" if m.gpu_watts > 0.5 => Val::Num(m.gpu_watts),
         "cpu_watts" | "gpu_watts" => return None,
-        "fps" => Val::Num(m.fps),
-        "frametime" => Val::Num(m.frametime_ms),
+        "fps" if m.fps > 0.5 => Val::Num(m.fps),
+        "frametime" if m.frametime_ms > 0.05 => Val::Num(m.frametime_ms),
+        "fps" | "frametime" => return None,
         _ => return None,
     };
     Some(v)
