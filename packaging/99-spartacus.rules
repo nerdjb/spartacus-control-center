@@ -21,3 +21,7 @@ KERNEL=="hidraw*", ATTRS{idVendor}=="3633", ATTRS{idProduct}=="002d", MODE="0666
 # Reload udev rules after installation
 # udevadm control --reload
 # udevadm trigger --attr-match=idVendor=3633
+
+# CPU package power via AMD Zen RAPL MSR (optional, for cpu_watts).
+# Group wheel keeps it limited to admin users of this machine.
+KERNEL=="msr[0-9]*", MODE="0660", GROUP="wheel"

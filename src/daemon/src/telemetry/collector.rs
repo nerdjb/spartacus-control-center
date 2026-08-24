@@ -14,6 +14,7 @@ pub struct TelemetryCollector {
     state: Arc<RwLock<DaemonState>>,
     prev_cpu_times: Option<(u64, u64)>, // (idle, total)
     prev_net_bytes: Option<(u64, u64)>, // (rx, tx)
+    prev_pkg_energy: Option<(std::time::Instant, f64)>, // RAPL/MSR joules
 }
 
 impl TelemetryCollector {
@@ -22,6 +23,7 @@ impl TelemetryCollector {
             state,
             prev_cpu_times: None,
             prev_net_bytes: None,
+            prev_pkg_energy: None,
         }
     }
 
@@ -43,6 +45,8 @@ impl TelemetryCollector {
         let ram = sysfs::ram_gb().await.ok();
         let disk = sysfs::disk_gb().ok();
         let net = self.net_rates().await;
+        let cpu_watts = sysfs::cpu_power_watts(&mut self.prev_pkg_energy).await;
+        let gpu_watts = sysfs::gpu_power_watts().await;
 
         {
             let mut state = self.state.write().await;
@@ -63,6 +67,12 @@ impl TelemetryCollector {
             }
             state.net_down_kbps = net.0;
             state.net_up_kbps = net.1;
+            if let Some(w) = cpu_watts {
+                state.cpu_watts = w;
+            }
+            if let Some(w) = gpu_watts {
+                state.gpu_watts = w;
+            }
             if let Some((fps, frametime)) = mangohud::latest_sample_from_dirs() {
                 state.fps = fps;
                 state.frametime_ms = frametime;

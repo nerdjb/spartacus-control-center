@@ -2,6 +2,7 @@
 // Pure functions; no shared state.
 
 use anyhow::Result;
+use std::path::PathBuf;
 use tokio::fs;
 
 /// CPU temperature from hwmon (prefers k10temp/coretemp/cpu_thermal),
@@ -157,4 +158,106 @@ pub async fn net_bytes() -> Result<(u64, u64)> {
         }
     }
     Ok((rx_total, tx_total))
+}
+
+// ---------------------------------------------------------------- power
+
+/// GPU power draw in watts: amdgpu exposes `power1_average` (microwatts).
+/// Fallback: NVIDIA `nvidia-smi --query-gpu=power.draw`.
+pub async fn gpu_power_watts() -> Option<f32> {
+    if let Ok(mut entries) = fs::read_dir("/sys/class/hwmon").await {
+        while let Ok(Some(entry)) = entries.next_entry().await {
+            let name = fs::read_to_string(entry.path().join("name"))
+                .await
+                .unwrap_or_default();
+            if name.contains("amdgpu") || name.contains("nouveau") {
+                for file in ["power1_average", "power1_input"] {
+                    if let Ok(raw) = fs::read_to_string(entry.path().join(file)).await {
+                        if let Ok(microwatts) = raw.trim().parse::<f32>() {
+                            if microwatts > 0.0 {
+                                return Some(microwatts / 1_000_000.0);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+    let out = tokio::process::Command::new("nvidia-smi")
+        .args(["--query-gpu=power.draw", "--format=csv,noheader,nounits"])
+        .output()
+        .await
+        .ok()?;
+    let text = String::from_utf8_lossy(&out.stdout);
+    text.split('\n').next()?.trim().parse::<f32>().ok()
+}
+
+/// CPU package power in watts.
+/// 1. Intel RAPL `energy_uj` when world-readable.
+/// 2. AMD Zen RAPL MSR 0xc001029b via /dev/cpu/0/msr (needs the msr udev
+///    rule from packaging/99-spartacus.rules). Energy counter is
+///    monotonically increasing in ~15.3 µJ units on Zen; power = delta/dt.
+/// Returns None when no source is accessible — callers render "--".
+pub async fn cpu_power_watts(prev: &mut Option<(std::time::Instant, f64)>) -> Option<f32> {
+    // -- Intel RAPL sysfs
+    if let Ok(mut entries) = fs::read_dir("/sys/class/powercap").await {
+        let mut total: Option<f64> = None;
+        let mut dirs: Vec<PathBuf> = Vec::new();
+        while let Ok(Some(entry)) = entries.next_entry().await {
+            let name = entry.file_name().to_string_lossy().to_string();
+            // top-level packages only (intel-rapl:0, amd-rapl:0), not subdomains
+            if name.contains("rapl") && name.matches(':').count() == 1 {
+                dirs.push(entry.path());
+            }
+        }
+        dirs.sort();
+        for dir in dirs {
+            if let Ok(raw) = fs::read_to_string(dir.join("energy_uj")).await {
+                if let Ok(uj) = raw.trim().parse::<f64>() {
+                    *total.get_or_insert(0.0) += uj;
+                }
+            }
+        }
+        if let Some(energy_uj) = total {
+            return delta_watts(prev, energy_uj * 1e-6);
+        }
+    }
+
+    // -- AMD Zen RAPL MSR (std fs: tiny reads on a char device)
+    let msr_open = std::fs::File::open("/dev/cpu/0/msr");
+    if let Ok(mut file) = msr_open {
+        use std::io::Read;
+        let unit = msr_u64(&mut file, 0xc0010299).unwrap_or(0); // RAPL power unit
+        // Zen encodes energy units in bits 12:8 of RAPL_POWER_UNIT
+        // (1/2^unit * 1e6 J per bit observed 15.3 µJ on Zen2-5); fall back
+        // to the documented constant when the register reads 0.
+        let energy_unit = if unit != 0 {
+            1.0 / (1u64 << ((unit >> 8) & 0x1f)) as f64 * 1e-6
+        } else {
+            15.3e-6
+        };
+        if let Some(raw) = msr_u64(&mut file, 0xc001029b) {
+            return delta_watts(prev, raw as f64 * energy_unit);
+        }
+    }
+    None
+}
+
+fn msr_u64(file: &mut std::fs::File, reg: u32) -> Option<u64> {
+    use std::os::unix::fs::FileExt;
+    let mut buf = [0u8; 8];
+    file.read_exact_at(&mut buf, reg as u64).ok()?;
+    Some(u64::from_le_bytes(buf))
+}
+
+fn delta_watts(prev: &mut Option<(std::time::Instant, f64)>, energy_j: f64) -> Option<f32> {
+    let now = std::time::Instant::now();
+    let watts = match *prev {
+        Some((t0, e0)) if now.duration_since(t0).as_secs_f64() > 0.2 && energy_j >= e0 => {
+            Some(((energy_j - e0) / now.duration_since(t0).as_secs_f64()) as f32)
+        }
+        _ => None,
+    };
+    *prev = Some((now, energy_j));
+    watts.filter(|w| *w >= 0.0 && *w < 1000.0)
 }

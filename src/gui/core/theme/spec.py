@@ -21,6 +21,7 @@ BINDINGS = [
     "net_up", "net_down",
     "pump_rpm", "fan_rpm", "pump_pct",
     "fps", "frametime",
+    "cpu_watts", "gpu_watts",
 ]
 
 WIDGET_KINDS = ["panel", "text", "ring", "bar", "rect", "circle"]

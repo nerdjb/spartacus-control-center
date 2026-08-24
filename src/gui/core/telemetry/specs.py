@@ -69,6 +69,8 @@ METRIC_SPECS: dict[str, MetricSpec] = {s.key: s for s in (
     # and stays GOOD (protocol §7 troubleshooting), the UI labels it "—".
     _spec("pump_rpm", "RPM", 0.0, 6000.0, stale_ms=1500, jump=2500.0),
     _spec("fps", "FPS", 0.0, 1200.0, stale_ms=3000, jump=None),
+    _spec("cpu_watts", "W", 1.0, 500.0, stale_ms=4000, jump=None),
+    _spec("gpu_watts", "W", 1.0, 1000.0, stale_ms=4000, jump=None),
     _spec("frametime_ms", "ms", 0.0, 200.0, stale_ms=3000, jump=None),
     _spec("aio_rpm", "RPM", 0.0, 4000.0, stale_ms=1500, jump=2000.0),
     _spec("ext1_rpm", "RPM", 0.0, 4000.0, stale_ms=1500, jump=2000.0),

@@ -32,6 +32,8 @@ pub struct Metrics {
     pub fan_rpm: u16,
     pub fps: f32,
     pub frametime_ms: f32,
+    pub cpu_watts: f32,
+    pub gpu_watts: f32,
 }
 
 impl Metrics {
@@ -208,6 +210,8 @@ pub fn snapshot(state: &crate::DaemonState) -> Metrics {
         cpu_temp: state.cpu_temp,
         fps: state.fps,
         frametime_ms: state.frametime_ms,
+        cpu_watts: state.cpu_watts,
+        gpu_watts: state.gpu_watts,
         cpu_freq_ghz: state.cpu_freq_ghz,
         gpu_usage: state.gpu_usage,
         gpu_temp: state.gpu_temp,

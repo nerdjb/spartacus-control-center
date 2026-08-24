@@ -138,6 +138,8 @@ async fn handle_rpc_request(
                 net_up_kbps: state_snapshot.net_up_kbps,
                 fps: state_snapshot.fps,
                 frametime_ms: state_snapshot.frametime_ms,
+                cpu_watts: state_snapshot.cpu_watts,
+                gpu_watts: state_snapshot.gpu_watts,
                 net_down_kbps: state_snapshot.net_down_kbps,
                 fan_control_auto: state_snapshot.fan_control_auto,
             };
@@ -156,6 +158,7 @@ async fn handle_rpc_request(
                 "disk_used_gb": s.disk_used_gb, "disk_total_gb": s.disk_total_gb,
                 "net_up_kbps": s.net_up_kbps, "net_down_kbps": s.net_down_kbps,
                 "fps": s.fps, "frametime_ms": s.frametime_ms,
+                "cpu_watts": s.cpu_watts, "gpu_watts": s.gpu_watts,
                 "fan_control_auto": s.fan_control_auto,
             }))
         }

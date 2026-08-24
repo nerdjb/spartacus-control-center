@@ -1,0 +1,273 @@
+{
+ "name": "rings-dark",
+ "background": {
+  "kind": "gradient",
+  "top": "#101319",
+  "bottom": "#1A202B"
+ },
+ "widgets": [
+  {
+   "kind": "text",
+   "x": 20,
+   "y": 30,
+   "size": 13,
+   "fill": "#8A93A6",
+   "text": "{date}"
+  },
+  {
+   "kind": "text",
+   "x": 240,
+   "y": 34,
+   "size": 26,
+   "fill": "#F2F4F8",
+   "align": "center",
+   "text": "{time}"
+  },
+  {
+   "kind": "text",
+   "x": 460,
+   "y": 30,
+   "size": 13,
+   "fill": "#8A93A6",
+   "align": "right",
+   "text": "FPS {fps:.0}"
+  },
+  {
+   "kind": "panel",
+   "x": 14,
+   "y": 56,
+   "w": 222,
+   "h": 200,
+   "r": 14,
+   "fill": "#161B29",
+   "stroke": "#26304A",
+   "stroke_w": 2
+  },
+  {
+   "kind": "ring",
+   "cx": 76,
+   "cy": 160,
+   "r": 48,
+   "thickness": 11,
+   "track": "#26304A",
+   "fill": "#00E5FF",
+   "binding": "cpu_usage",
+   "min": 0,
+   "max": 100,
+   "center_text": "{cpu_usage:.0}%",
+   "center_size": 22
+  },
+  {
+   "kind": "text",
+   "x": 140,
+   "y": 90,
+   "size": 18,
+   "fill": "#00E5FF",
+   "text": "CPU"
+  },
+  {
+   "kind": "text",
+   "x": 140,
+   "y": 126,
+   "size": 30,
+   "fill": "#F2F4F8",
+   "text": "{cpu_temp:.0}°C"
+  },
+  {
+   "kind": "text",
+   "x": 140,
+   "y": 160,
+   "size": 20,
+   "fill": "#FF8A3D",
+   "text": "{cpu_watts:.0} W"
+  },
+  {
+   "kind": "text",
+   "x": 140,
+   "y": 194,
+   "size": 13,
+   "fill": "#8A93A6",
+   "text": "{cpu_freq:.2}GHz"
+  },
+  {
+   "kind": "panel",
+   "x": 244,
+   "y": 56,
+   "w": 222,
+   "h": 200,
+   "r": 14,
+   "fill": "#161B29",
+   "stroke": "#26304A",
+   "stroke_w": 2
+  },
+  {
+   "kind": "ring",
+   "cx": 306,
+   "cy": 160,
+   "r": 48,
+   "thickness": 11,
+   "track": "#26304A",
+   "fill": "#FF3DDC",
+   "binding": "gpu_usage",
+   "min": 0,
+   "max": 100,
+   "center_text": "{gpu_usage:.0}%",
+   "center_size": 22
+  },
+  {
+   "kind": "text",
+   "x": 370,
+   "y": 90,
+   "size": 18,
+   "fill": "#FF3DDC",
+   "text": "GPU"
+  },
+  {
+   "kind": "text",
+   "x": 370,
+   "y": 126,
+   "size": 30,
+   "fill": "#F2F4F8",
+   "text": "{gpu_temp:.0}°C"
+  },
+  {
+   "kind": "text",
+   "x": 370,
+   "y": 160,
+   "size": 20,
+   "fill": "#FF8A3D",
+   "text": "{gpu_watts:.0} W"
+  },
+  {
+   "kind": "text",
+   "x": 370,
+   "y": 194,
+   "size": 13,
+   "fill": "#8A93A6",
+   "text": "{gpu_usage:.0}% load"
+  },
+  {
+   "kind": "panel",
+   "x": 14,
+   "y": 266,
+   "w": 222,
+   "h": 200,
+   "r": 14,
+   "fill": "#161B29",
+   "stroke": "#26304A",
+   "stroke_w": 2
+  },
+  {
+   "kind": "ring",
+   "cx": 76,
+   "cy": 370,
+   "r": 48,
+   "thickness": 11,
+   "track": "#26304A",
+   "fill": "#4DA3FF",
+   "binding": "ram_pct",
+   "min": 0,
+   "max": 100,
+   "center_text": "{ram_pct:.0}%",
+   "center_size": 22
+  },
+  {
+   "kind": "text",
+   "x": 140,
+   "y": 300,
+   "size": 18,
+   "fill": "#4DA3FF",
+   "text": "RAM"
+  },
+  {
+   "kind": "text",
+   "x": 140,
+   "y": 336,
+   "size": 30,
+   "fill": "#F2F4F8",
+   "text": "{ram_pct:.0}%"
+  },
+  {
+   "kind": "text",
+   "x": 140,
+   "y": 370,
+   "size": 16,
+   "fill": "#F2F4F8",
+   "text": "{ram_used:.1}/{ram_total:.0} GB"
+  },
+  {
+   "kind": "text",
+   "x": 140,
+   "y": 404,
+   "size": 13,
+   "fill": "#8A93A6",
+   "text": "Free {ram_free:.1} GB"
+  },
+  {
+   "kind": "panel",
+   "x": 244,
+   "y": 266,
+   "w": 222,
+   "h": 200,
+   "r": 14,
+   "fill": "#161B29",
+   "stroke": "#26304A",
+   "stroke_w": 2
+  },
+  {
+   "kind": "ring",
+   "cx": 306,
+   "cy": 370,
+   "r": 48,
+   "thickness": 11,
+   "track": "#26304A",
+   "fill": "#FF8A3D",
+   "binding": "pump_pct",
+   "min": 0,
+   "max": 100,
+   "center_text": "{pump_pct:.0}%",
+   "center_size": 22
+  },
+  {
+   "kind": "text",
+   "x": 370,
+   "y": 300,
+   "size": 18,
+   "fill": "#FF8A3D",
+   "text": "PUMP"
+  },
+  {
+   "kind": "text",
+   "x": 370,
+   "y": 336,
+   "size": 30,
+   "fill": "#F2F4F8",
+   "text": "{pump_pct:.0}%"
+  },
+  {
+   "kind": "text",
+   "x": 370,
+   "y": 370,
+   "size": 18,
+   "fill": "#F2F4F8",
+   "text": "{pump_rpm:.0} RPM"
+  },
+  {
+   "kind": "text",
+   "x": 356,
+   "y": 404,
+   "size": 12,
+   "fill": "#8A93A6",
+   "text": "FANS {fan_rpm:.0} RPM"
+  },
+  {
+   "kind": "text",
+   "x": 240,
+   "y": 474,
+   "size": 14,
+   "fill": "#8A93A6",
+   "align": "center",
+   "text": "↓ {net_down:.0} kB/s    ↑ {net_up:.0} kB/s"
+  }
+ ]
+}

@@ -32,6 +32,7 @@ DEMO_METRICS = {
     "net_up": 220.4, "net_down": 1400.0,
     "pump_rpm": 2380, "fan_rpm": 1240, "pump_pct": 68.0,
     "fps": 143.0, "frametime": 7.0,
+    "cpu_watts": 88.0, "gpu_watts": 220.0,
 }
 
 _font_cache: dict[tuple[str, int], ImageFont.FreeTypeFont] = {}
