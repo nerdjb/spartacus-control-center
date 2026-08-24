@@ -47,6 +47,10 @@ pub struct USBMonitor {
 }
 
 impl USBMonitor {
+    fn refresh_period_ms(&self) -> u64 {
+        self.renderer.refresh_period_ms(self.refresh_ms.max(100))
+    }
+
     pub fn new(
         state: Arc<RwLock<DaemonState>>,
         theme: &str,
@@ -68,7 +72,7 @@ impl USBMonitor {
 
         let mut connect_interval = interval(Duration::from_secs(2));
         let mut rpm_interval = interval(Duration::from_millis(500));
-        let mut screen_interval = interval(Duration::from_millis(self.refresh_ms.max(250)));
+        let mut next_screen = tokio::time::Instant::now() + Duration::from_millis(self.refresh_period_ms());
 
         loop {
             tokio::select! {
@@ -82,10 +86,12 @@ impl USBMonitor {
                     }
                 }
 
-                _ = screen_interval.tick(), if self.lcd.connected => {
+                _ = tokio::time::sleep_until(next_screen), if self.lcd.connected => {
                     if let Err(e) = self.push_theme_frame().await {
                         warn!("Screen refresh failed: {}", e);
                     }
+                    next_screen = tokio::time::Instant::now()
+                        + Duration::from_millis(self.refresh_period_ms());
                 }
 
                 Some(command) = self.commands.recv() => {

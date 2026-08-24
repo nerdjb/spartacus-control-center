@@ -129,8 +129,12 @@ impl ScreenRenderer {
     pub fn render(&self, m: &Metrics) -> Vec<u8> {
         let mut canvas = draw::Canvas::new(480, 480);
         if let Some(spec) = &self.spec {
+            let now_ms = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .map(|d| d.as_millis() as u64)
+                .unwrap_or(0);
             let mut images = self.images.lock().unwrap();
-            theme_spec::render(&mut canvas, spec, m, &self.font, &mut images);
+            theme_spec::render(&mut canvas, spec, m, &self.font, &mut images, now_ms);
             return canvas.px;
         }
         match self.theme.as_str() {
@@ -146,8 +150,21 @@ impl ScreenRenderer {
     pub fn render_spec_frame(&self, spec: &theme_spec::ThemeSpec, m: &Metrics) -> Vec<u8> {
         let mut canvas = draw::Canvas::new(480, 480);
         let mut images = self.images.lock().unwrap();
-        theme_spec::render(&mut canvas, spec, m, &self.font, &mut images);
+        let now_ms = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis() as u64)
+            .unwrap_or(0);
+        theme_spec::render(&mut canvas, spec, m, &self.font, &mut images, now_ms);
         canvas.px
+    }
+
+    /// Animated specs need ~10 fps to play smoothly; otherwise the slow
+    /// configured refresh is enough.
+    pub fn refresh_period_ms(&self, configured: u64) -> u64 {
+        match &self.spec {
+            Some(spec) if theme_spec::wants_animation(spec) => configured.min(100),
+            _ => configured,
+        }
     }
 }
 

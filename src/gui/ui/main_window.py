@@ -8,7 +8,7 @@ from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
 
-from PyQt6.QtCore import Qt, QTimer, pyqtSignal
+from PyQt6.QtCore import Qt, QTimer, QSize, pyqtSignal
 from PyQt6.QtGui import QColor, QKeySequence, QShortcut, QImage
 from PyQt6.QtWidgets import (
     QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QFrame,
@@ -19,6 +19,7 @@ from PyQt6.QtWidgets import (
 
 from core.hardware.curves import apply_pump_floor, default_curve, sanitize_points
 from core.ipc.client import DaemonClient, TelemetryWorker
+from PIL import Image
 from core.theme.preview import SpecRenderer, widget_at
 from core.theme.spec import BINDINGS, WIDGET_KINDS, ThemeSpec, Widget, builtin_specs
 from core.telemetry.diagnostics import collect_rows
@@ -336,7 +337,8 @@ class ThemeStudioPage(QWidget):
         for sequence, handler in shortcuts.items():
             QShortcut(QKeySequence(sequence), self).activated.connect(handler)
 
-        self.load_preset("slate")
+        presets = builtin_specs()
+        self.load_preset("cards" if "cards" in presets else next(iter(presets), ""))
 
     # -- UI construction ------------------------------------------------------
 
@@ -346,10 +348,13 @@ class ThemeStudioPage(QWidget):
         brand = QLabel("THEME STUDIO")
         brand.setObjectName("CardTitle")
         toolbar.addWidget(brand)
-        self.preset_combo = QComboBox()
-        self.preset_combo.addItems(list(builtin_specs()))
-        self.preset_combo.currentTextChanged.connect(self.load_preset)
-        toolbar.addWidget(self.preset_combo)
+        edit_button = QPushButton("✏  Edit Theme")
+        edit_button.setProperty("accent", "primary")
+        edit_button.clicked.connect(self.pick_theme_edit)
+        create_button = QPushButton("＋  Create Theme")
+        create_button.clicked.connect(self.pick_theme_create)
+        toolbar.addWidget(edit_button)
+        toolbar.addWidget(create_button)
         open_button = QPushButton("Open JSON")
         open_button.clicked.connect(self.open_json)
         save_button = QPushButton("Save JSON")
@@ -480,6 +485,85 @@ class ThemeStudioPage(QWidget):
         return metrics
 
     # -- actions -----------------------------------------------------------------
+
+    def pick_theme_edit(self) -> None:
+        name = self._theme_gallery("Edit which theme?")
+        if name:
+            self.load_preset(name)
+            self.status.setText(f"Editing '{name}' — change anything, then APPLY TO DAEMON.")
+
+    def pick_theme_create(self) -> None:
+        name = self._theme_gallery("Create — pick a starting style:", allow_blank=True)
+        if not name:
+            return
+        self.push_undo()
+        if name == "__blank__":
+            self.spec = ThemeSpec(name="my-theme")
+        else:
+            self.spec = deepcopy(builtin_specs()[name])
+            self.spec.name = "my-theme"
+        self.selected = -1
+        self.refresh_all()
+        self.status.setText("New theme created — rename it (top-right name field "
+                            "in Save), design, then APPLY TO DAEMON.")
+
+    def _theme_gallery(self, title: str, allow_blank: bool = False) -> str | None:
+        """Visual theme picker: rendered thumbnails, click to choose."""
+        from PyQt6.QtWidgets import QDialog, QListWidget, QListWidgetItem, QVBoxLayout, QDialogButtonBox
+
+        dialog = QDialog(self)
+        dialog.setWindowTitle(title)
+        layout = QVBoxLayout(dialog)
+        listing = QListWidget()
+        listing.setIconSize(QSize(120, 120))
+        listing.setViewMode(QListWidget.ViewMode.IconMode)
+        listing.setResizeMode(QListWidget.ResizeMode.Adjust)
+        listing.setSpacing(12)
+
+        themes = dict(builtin_specs())
+        if allow_blank:
+            blank = QListWidgetItem("Blank")
+            blank.setIcon(self._thumbnail(ThemeSpec(name="blank")))
+            blank.setData(Qt.ItemDataRole.UserRole, "__blank__")
+            listing.addItem(blank)
+        for name, spec in themes.items():
+            item = QListWidgetItem(name)
+            item.setIcon(self._thumbnail(spec))
+            item.setData(Qt.ItemDataRole.UserRole, name)
+            listing.addItem(item)
+        layout.addWidget(listing)
+        buttons = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok |
+                                   QDialogButtonBox.StandardButton.Cancel)
+        buttons.accepted.connect(dialog.accept)
+        buttons.rejected.connect(dialog.reject)
+        layout.addWidget(buttons)
+        listing.itemDoubleClicked.connect(lambda _: dialog.accept())
+        listing.setCurrentRow(0)
+
+        if dialog.exec() != QDialog.DialogCode.Accepted:
+            return None
+        selected = listing.currentItem()
+        return selected.data(Qt.ItemDataRole.UserRole) if selected else None
+
+    _thumb_cache: dict = {}
+
+    def _thumbnail(self, spec):
+        from PyQt6.QtGui import QIcon, QPixmap, QImage
+
+        key = spec.name
+        if key in self._thumb_cache:
+            return self._thumb_cache[key]
+        try:
+            image = SpecRenderer(spec).render(supersample=1)
+        except Exception:
+            image = Image.new("RGB", (480, 480), (20, 24, 32))
+        data = image.tobytes()
+        qimg = QImage(data, 480, 480, 480 * 3, QImage.Format.Format_RGB888)
+        icon = QIcon(QPixmap.fromImage(qimg).scaled(
+            120, 120, Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation))
+        self._thumb_cache[key] = icon
+        return icon
 
     def load_preset(self, name: str) -> None:
         specs = builtin_specs()

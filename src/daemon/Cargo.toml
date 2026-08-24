@@ -32,7 +32,7 @@ chrono = "0.4"
 anyhow = "1.0"
 
 # Theme spec image widgets (PNG/JPEG decoding)
-image = { version = "0.25", default-features = false, features = ["png", "jpeg"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif"] }
 
 [profile.release]
 opt-level = 3

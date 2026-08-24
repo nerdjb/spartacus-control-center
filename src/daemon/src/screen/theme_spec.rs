@@ -28,6 +28,7 @@ use super::draw::{Align, Canvas, Color};
 use super::helpers;
 use super::Metrics;
 use fontdue::Font;
+use image::{AnimationDecoder, ImageDecoder};
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -52,11 +53,14 @@ pub struct ThemeSpec {
 #[derive(Debug, Clone, Deserialize)]
 pub struct BackgroundSpec {
     #[serde(default = "default_bg_kind")]
-    pub kind: String, // "gradient" | "solid"
+    pub kind: String, // "gradient" | "solid" | "image"
     #[serde(default = "default_bg_top")]
     pub top: String,
     #[serde(default = "default_bg_bottom")]
     pub bottom: String,
+    /// image path (relative to the spec), animated GIFs play in a loop
+    #[serde(default)]
+    pub path: Option<String>,
 }
 
 impl Default for BackgroundSpec {
@@ -65,6 +69,7 @@ impl Default for BackgroundSpec {
             kind: default_bg_kind(),
             top: default_bg_top(),
             bottom: default_bg_bottom(),
+            path: None,
         }
     }
 }
@@ -138,7 +143,32 @@ pub struct WidgetSpec {
 pub struct ImageData {
     pub w: u32,
     pub h: u32,
+    /// GIFs decode to multiple frames (delay ms + pixels); static images
+    /// are a single frame with delay 0.
+    pub frames: Vec<FrameData>,
+    pub total_ms: u64,
+}
+
+pub struct FrameData {
+    pub delay_ms: u32,
     pub rgba: Vec<u8>,
+}
+
+impl ImageData {
+    /// Frame to draw at wall-clock `now_ms` (animations loop forever).
+    pub fn frame_at(&self, now_ms: u64) -> &FrameData {
+        if self.frames.len() <= 1 || self.total_ms == 0 {
+            return &self.frames[0];
+        }
+        let mut at = now_ms % self.total_ms;
+        for frame in &self.frames {
+            if at < frame.delay_ms as u64 {
+                return frame;
+            }
+            at -= frame.delay_ms as u64;
+        }
+        &self.frames[self.frames.len() - 1]
+    }
 }
 
 /// Decodes spec images once and caches them: the theme stream re-renders
@@ -160,12 +190,39 @@ impl ImageCache {
 
     fn decode(&self, path: &Path) -> Option<Arc<ImageData>> {
         let bytes = std::fs::read(path).ok()?;
+        let format = image::guess_format(&bytes).ok()?;
+        if format == image::ImageFormat::Gif {
+            let decoder = image::codecs::gif::GifDecoder::new(std::io::Cursor::new(bytes)).ok()?;
+            let (w, h) = decoder.dimensions();
+            let mut frames = Vec::new();
+            let mut total_ms = 0u64;
+            for frame in decoder.into_frames() {
+                let frame = frame.ok()?;
+                let delay_ms = frame.delay().numer_denom_ms().0.max(20) as u32;
+                total_ms += delay_ms as u64;
+                frames.push(FrameData {
+                    delay_ms,
+                    rgba: frame.buffer().as_raw().clone(),
+                });
+            }
+            if frames.is_empty() {
+                return None;
+            }
+            return Some(Arc::new(ImageData {
+                w,
+                h,
+                frames,
+                total_ms,
+            }));
+        }
         let img = image::load_from_memory(&bytes).ok()?;
         let rgba = img.to_rgba8();
+        let (w, h) = (rgba.width(), rgba.height());
         Some(Arc::new(ImageData {
-            w: rgba.width(),
-            h: rgba.height(),
-            rgba: rgba.into_raw(),
+            w,
+            h,
+            frames: vec![FrameData { delay_ms: 0, rgba: rgba.into_raw() }],
+            total_ms: 0,
         }))
     }
 }
@@ -323,8 +380,20 @@ pub fn render(
     m: &Metrics,
     font: &Font,
     images: &mut ImageCache,
+    now_ms: u64,
 ) {
     match spec.background.kind.as_str() {
+        "image" => {
+            if let Some(rel) = &spec.background.path {
+                let path = resolve_path(spec, rel);
+                if let Some(img) = images.get(&path) {
+                    let frame = img.frame_at(now_ms);
+                    c.blit(0, 0, 480, 480, img.w, img.h, &frame.rgba);
+                } else {
+                    c.rect(0, 0, 480, 480, [0x0a, 0x0c, 0x14]);
+                }
+            }
+        }
         "solid" => c.rect(0, 0, 480, 480, parse_color(&spec.background.top)),
         _ => c.gradient_v(
             0,
@@ -334,7 +403,15 @@ pub fn render(
         ),
     }
     for w in &spec.widgets {
-        draw_widget(c, w, m, font, spec, images);
+        draw_widget(c, w, m, font, spec, images, now_ms);
+    }
+}
+
+fn resolve_path(spec: &ThemeSpec, rel: &str) -> PathBuf {
+    if rel.starts_with('/') {
+        PathBuf::from(rel)
+    } else {
+        spec.base_dir.join(rel)
     }
 }
 
@@ -345,17 +422,21 @@ fn draw_widget(
     font: &Font,
     spec: &ThemeSpec,
     images: &mut ImageCache,
+    now_ms: u64,
 ) {
     match w.kind.as_str() {
         "panel" => {
-            c.round_rect(
-                w.x as i32,
-                w.y as i32,
-                w.w.max(1.0) as u32,
-                w.h.max(1.0) as u32,
-                w.r as u32,
-                opt_color(&w.fill).unwrap_or([0x16, 0x1b, 0x29]),
-            );
+            let translucent = matches!(w.fill.as_deref(), None | Some("transparent") | Some(""));
+            if !translucent {
+                c.round_rect(
+                    w.x as i32,
+                    w.y as i32,
+                    w.w.max(1.0) as u32,
+                    w.h.max(1.0) as u32,
+                    w.r as u32,
+                    opt_color(&w.fill).unwrap_or([0x16, 0x1b, 0x29]),
+                );
+            }
             if w.stroke_w > 0.0 {
                 if let Some(stroke) = opt_color(&w.stroke) {
                     c.round_rect_outline(
@@ -443,12 +524,9 @@ fn draw_widget(
         }
         "image" => {
             if let Some(rel) = &w.path {
-                let path = if rel.starts_with('/') {
-                    PathBuf::from(rel)
-                } else {
-                    spec.base_dir.join(rel)
-                };
+                let path = resolve_path(spec, rel);
                 if let Some(img) = images.get(&path) {
+                    let frame = img.frame_at(now_ms);
                     c.blit(
                         w.x as i32,
                         w.y as i32,
@@ -456,7 +534,7 @@ fn draw_widget(
                         w.h.max(1.0) as u32,
                         img.w,
                         img.h,
-                        &img.rgba,
+                        &frame.rgba,
                     );
                 }
             }
@@ -468,6 +546,17 @@ fn draw_widget(
 // ---------------------------------------------------------------- built-ins
 
 pub const AURORA_JSON: &str = include_str!("themes/aurora.json");
+
+/// True when the spec contains an animated image (GIF): the theme stream
+/// should then render at ~10 fps instead of the configured slow refresh.
+pub fn wants_animation(spec: &ThemeSpec) -> bool {
+    let animated = |rel: &Option<String>| {
+        rel.as_deref()
+            .map(|p| p.to_lowercase().ends_with(".gif"))
+            .unwrap_or(false)
+    };
+    animated(&spec.background.path) || spec.widgets.iter().any(|w| animated(&w.path))
+}
 
 /// Parse a spec from JSON text.
 pub fn parse_spec(json: &str) -> Result<ThemeSpec, String> {

@@ -106,7 +106,37 @@ class SpecRenderer:
         image = Image.new("RGBA", (size, size))
         draw = ImageDraw.Draw(image)
         bg = self.spec.background
-        if bg.get("kind") == "solid":
+        if bg.get("kind") == "image" and bg.get("path"):
+            path = Path(bg["path"])
+            if not path.is_absolute() and self.spec.source_dir:
+                path = Path(self.spec.source_dir) / path
+            if path.is_file():
+                try:
+                    gif = Image.open(path)
+                    import time as _time
+                    idx = int(_time.time() * 1000) % 100
+                    total = 0
+                    delays = []
+                    for i in range(getattr(gif, "n_frames", 1)):
+                        gif.seek(i)
+                        delays.append(max(20, gif.info.get("duration", 70)))
+                        total += delays[-1]
+                    at = (int(_time.time() * 1000) % total) if total else 0
+                    acc = 0
+                    frame_i = 0
+                    for i, dl in enumerate(delays):
+                        if at < acc + dl:
+                            frame_i = i
+                            break
+                        acc += dl
+                    gif.seek(frame_i)
+                    frame = gif.convert("RGBA").resize((size, size))
+                    image.alpha_composite(frame)
+                except Exception:
+                    pass
+            else:
+                draw.rectangle((0, 0, size, size), fill=(10, 12, 20, 255))
+        elif bg.get("kind") == "solid":
             draw.rectangle((0, 0, size, size), fill=_color(bg.get("top", "#0B0E1A")))
         else:
             top, bottom = _color(bg.get("top", "#0B0E1A")), _color(bg.get("bottom", "#101528"))
@@ -126,9 +156,13 @@ class SpecRenderer:
         if kind == "panel":
             box = self._box(w.x, w.y, w.w, w.h, S)
             r = int(w.r * S)
-            draw.rounded_rectangle(box, radius=min(r, (box[2] - box[0]) // 2,
-                                                   (box[3] - box[1]) // 2),
-                                   fill=_color(w.fill, (35, 40, 51, 255)))
+            if str(w.fill).lower() in ("", "none", "transparent"):
+                fill = None
+            else:
+                fill = _color(w.fill, (35, 40, 51, 255))
+            if fill is not None:
+                draw.rounded_rectangle(box, radius=min(r, (box[2] - box[0]) // 2,
+                                                       (box[3] - box[1]) // 2), fill=fill)
             if w.stroke_w > 0 and w.stroke:
                 draw.rounded_rectangle(box, radius=r,
                                        outline=_color(w.stroke), width=max(1, int(w.stroke_w * S)))
@@ -157,7 +191,25 @@ class SpecRenderer:
         if not path.is_file():
             return
         try:
-            src = Image.open(path).convert("RGBA")
+            src = Image.open(path)
+            if getattr(src, "n_frames", 1) > 1:
+                import time as _time
+                total = 0
+                delays = []
+                for i in range(src.n_frames):
+                    src.seek(i)
+                    delays.append(max(20, src.info.get("duration", 70)))
+                    total += delays[-1]
+                at = int(_time.time() * 1000) % total
+                acc = 0
+                frame_i = 0
+                for i, dl in enumerate(delays):
+                    if at < acc + dl:
+                        frame_i = i
+                        break
+                    acc += dl
+                src.seek(frame_i)
+            src = src.convert("RGBA")
         except Exception:
             return
         size = (max(1, int(w.w * S)), max(1, int(w.h * S)))
