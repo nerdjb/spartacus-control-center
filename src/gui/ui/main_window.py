@@ -324,7 +324,18 @@ class ThemeStudioPage(QWidget):
         self.redo_stack: list[dict] = []
         self._drag_offset = (0.0, 0.0)
         self._dragging = False
-        self._build_ui()
+        self.stack = QStackedWidget(self)
+        outer = QVBoxLayout(self)
+        outer.setContentsMargins(0, 0, 0, 0)
+        outer.addWidget(self.stack)
+        editor_page = QWidget()
+        editor_root = QVBoxLayout(editor_page)
+        self._build_ui(editor_root)
+        self.stack.addWidget(editor_page)
+        browse_page = QWidget()
+        self._build_browse(browse_page)
+        self.stack.addWidget(browse_page)
+        self.stack.setCurrentIndex(0)
 
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.refresh_live)
@@ -342,12 +353,15 @@ class ThemeStudioPage(QWidget):
 
     # -- UI construction ------------------------------------------------------
 
-    def _build_ui(self):
-        root = QVBoxLayout(self)
+    def _build_ui(self, root):
         toolbar = QHBoxLayout()
         brand = QLabel("THEME STUDIO")
         brand.setObjectName("CardTitle")
         toolbar.addWidget(brand)
+        back_button = QPushButton("← All Themes")
+        back_button.clicked.connect(lambda: self.stack.setCurrentIndex(0))
+        toolbar.addWidget(back_button)
+        toolbar.addStretch()
         edit_button = QPushButton("✏  Edit Theme")
         edit_button.setProperty("accent", "primary")
         edit_button.clicked.connect(self.pick_theme_edit)
@@ -485,6 +499,98 @@ class ThemeStudioPage(QWidget):
         return metrics
 
     # -- actions -----------------------------------------------------------------
+
+    def _build_browse(self, page):
+        root = QVBoxLayout(page)
+        header = QHBoxLayout()
+        brand = QLabel("THEMES")
+        brand.setObjectName("BrandTitle")
+        header.addWidget(brand)
+        header.addStretch()
+        hint = QLabel("Pick a card → APPLY puts it on the panel. EDIT opens the designer.")
+        hint.setObjectName("CardTitle")
+        header.addWidget(hint)
+        root.addLayout(header)
+
+        scroll = QScrollArea()
+        scroll.setWidgetResizable(True)
+        grid_widget = QWidget()
+        grid = QGridLayout(grid_widget)
+        grid.setSpacing(14)
+        presets = builtin_specs()
+        for index, (name, spec) in enumerate(presets.items()):
+            grid.addWidget(self._theme_card(name, spec), index // 3, index % 3)
+        grid.setRowStretch(len(presets) // 3 + 1, 1)
+        scroll.setWidget(grid_widget)
+        root.addWidget(scroll)
+
+    def _theme_card(self, name, spec):
+        card = QFrame()
+        card.setProperty("card", True)
+        card.setFixedWidth(240)
+        layout = QVBoxLayout(card)
+        thumb = QLabel()
+        thumb.setPixmap(self._thumbnail_pixmap(spec))
+        thumb.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(thumb)
+        label = QLabel(name)
+        label.setObjectName("CardTitle")
+        label.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        layout.addWidget(label)
+        buttons = QHBoxLayout()
+        apply_button = QPushButton("APPLY")
+        apply_button.setProperty("accent", "primary")
+        apply_button.clicked.connect(lambda _, n=name: self._apply_preset(n))
+        edit_button = QPushButton("Edit")
+        edit_button.clicked.connect(lambda _, n=name: self._edit_preset(n))
+        buttons.addWidget(apply_button)
+        buttons.addWidget(edit_button)
+        layout.addLayout(buttons)
+        return card
+
+    def _apply_preset(self, name: str) -> None:
+        spec = deepcopy(builtin_specs().get(name))
+        if spec is None:
+            return
+        spec.name = name
+        try:
+            target_dir = Path.home() / ".config" / "spartacus" / "themes"
+            target_dir.mkdir(parents=True, exist_ok=True)
+            spec.save(target_dir / f"{name}.json")
+            for widget in spec.widgets:
+                if widget.kind == "image" and widget.path:
+                    src = Path(widget.path)
+                    if not src.is_absolute() and spec.source_dir:
+                        src = Path(spec.source_dir) / widget.path
+                    if src.is_file():
+                        dst = target_dir / widget.path
+                        dst.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(src, dst)
+            result = self.client.try_call("SetTheme", {"name": name})
+            if result is not None:
+                self.status.setText(f"Panel now shows '{name}'.")
+            else:
+                self.status.setText("Saved, but daemon unreachable.")
+        except Exception as exc:
+            QMessageBox.critical(self, "Apply failed", str(exc))
+
+    def _edit_preset(self, name: str) -> None:
+        self.load_preset(name)
+        self.stack.setCurrentIndex(0)
+        self.status.setText(f"Editing '{name}' — APPLY TO DAEMON when done.")
+
+    def _thumbnail_pixmap(self, spec):
+        from PyQt6.QtGui import QPixmap, QImage
+
+        try:
+            image = SpecRenderer(spec).render(supersample=1)
+        except Exception:
+            image = Image.new("RGB", (480, 480), (20, 24, 32))
+        data = image.tobytes()
+        qimg = QImage(data, 480, 480, 480 * 3, QImage.Format.Format_RGB888)
+        return QPixmap.fromImage(qimg).scaled(
+            210, 210, Qt.AspectRatioMode.KeepAspectRatio,
+            Qt.TransformationMode.SmoothTransformation)
 
     def pick_theme_edit(self) -> None:
         name = self._theme_gallery("Edit which theme?")

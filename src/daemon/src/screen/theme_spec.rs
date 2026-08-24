@@ -194,15 +194,43 @@ impl ImageCache {
         if format == image::ImageFormat::Gif {
             let decoder = image::codecs::gif::GifDecoder::new(std::io::Cursor::new(bytes)).ok()?;
             let (w, h) = decoder.dimensions();
+            // GIF frames are often cropped diff-rectangles: composite each
+            // frame onto the full canvas (alpha over previous state) so every
+            // stored frame is a complete picture.
+            let mut canvas = vec![0u8; (w as usize) * (h as usize) * 4];
             let mut frames = Vec::new();
             let mut total_ms = 0u64;
             for frame in decoder.into_frames() {
                 let frame = frame.ok()?;
+                let (fw, fh) = (frame.buffer().width(), frame.buffer().height());
+                let (fl, ft) = (frame.left().min(w), frame.top().min(h));
+                let fw = fw.min(w - fl);
+                let fh = fh.min(h - ft);
+                for y in 0..fh {
+                    let src = &frame.buffer().as_raw()
+                        [(y * fw * 4) as usize..((y + 1) * fw * 4) as usize];
+                    let dst_base = (((ft + y) * w + fl) * 4) as usize;
+                    for x in 0..fw {
+                        let si = (x * 4) as usize;
+                        let di = dst_base + si;
+                        let a = src[si + 3] as u16;
+                        if a == 255 {
+                            canvas[di..di + 4].copy_from_slice(&src[si..si + 4]);
+                        } else if a > 0 {
+                            for c in 0..3 {
+                                canvas[di + c] = ((src[si + c] as u16 * a
+                                    + canvas[di + c] as u16 * (255 - a))
+                                    / 255) as u8;
+                            }
+                            canvas[di + 3] = 255;
+                        }
+                    }
+                }
                 let delay_ms = frame.delay().numer_denom_ms().0.max(20) as u32;
                 total_ms += delay_ms as u64;
                 frames.push(FrameData {
                     delay_ms,
-                    rgba: frame.buffer().as_raw().clone(),
+                    rgba: canvas.clone(),
                 });
             }
             if frames.is_empty() {
