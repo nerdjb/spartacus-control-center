@@ -20,6 +20,7 @@ from PyQt6.QtWidgets import (
 from core.hardware.curves import apply_pump_floor, default_curve, sanitize_points
 from core.ipc.client import DaemonClient, TelemetryWorker
 from PIL import Image
+from core.theme.components import COMPONENTS
 from core.theme.preview import SpecRenderer, widget_at
 from core.theme.spec import BINDINGS, WIDGET_KINDS, ThemeSpec, Widget, builtin_specs
 from core.telemetry.diagnostics import collect_rows
@@ -322,6 +323,8 @@ class ThemeStudioPage(QWidget):
         self.selected = -1
         self.undo_stack: list[dict] = []
         self.redo_stack: list[dict] = []
+        self.card_groups: list[list[int]] = []
+        self.card_accents: dict[int, str] = {}
         self._drag_offset = (0.0, 0.0)
         self._dragging = False
         self.stack = QStackedWidget(self)
@@ -361,6 +364,13 @@ class ThemeStudioPage(QWidget):
         back_button = QPushButton("← All Themes")
         back_button.clicked.connect(lambda: self.stack.setCurrentIndex(0))
         toolbar.addWidget(back_button)
+        for card_name in COMPONENTS:
+            button = QPushButton(f"+ {card_name}")
+            button.setToolTip(f"Drag or click to add a {card_name} card")
+            button.clicked.connect(lambda _, k=card_name: self.insert_card(k, 140, 170))
+            button.installEventFilter(self)
+            self._drag_source = getattr(self, "_drag_source", None)
+            toolbar.addWidget(button)
         toolbar.addStretch()
         edit_button = QPushButton("✏  Edit Theme")
         edit_button.setProperty("accent", "primary")
@@ -464,6 +474,7 @@ class ThemeStudioPage(QWidget):
         self.redo_stack.append(deepcopy(self.spec.to_dict()))
         self.spec = ThemeSpec.from_dict(self.undo_stack.pop())
         self.selected = -1
+        self.card_groups.clear()
         self.refresh_all()
 
     def redo(self) -> None:
@@ -472,6 +483,7 @@ class ThemeStudioPage(QWidget):
         self.undo_stack.append(deepcopy(self.spec.to_dict()))
         self.spec = ThemeSpec.from_dict(self.redo_stack.pop())
         self.selected = -1
+        self.card_groups.clear()
         self.refresh_all()
 
     def live_metrics(self) -> dict:
@@ -863,6 +875,30 @@ class ThemeStudioPage(QWidget):
                 lambda: self.set_bg_color("bottom", bottom_edit.text()))
             self.inspector.addRow("Bottom", bottom_edit)
 
+        group_i = self.card_of(self.selected) if self.selected >= 0 else None
+        if group_i is not None:
+            title = QLabel("Card style")
+            title.setObjectName("CardTitle")
+            self.inspector.addRow(title)
+            accent_edit = QLineEdit(self.card_accents.get(group_i, "#00E5FF"))
+            accent_edit.editingFinished.connect(
+                lambda gi=group_i, e=accent_edit: self.set_card_accent(gi, e.text()))
+            self.inspector.addRow("Color", accent_edit)
+            style_combo = QComboBox()
+            style_combo.addItems(["Full", "Gauge", "Half"])
+            style_combo.currentTextChanged.connect(
+                lambda s, gi=group_i: self.set_ring_style(gi, s))
+            self.inspector.addRow("Ring style", style_combo)
+            group = self.card_groups[group_i]
+            big = max(group, key=lambda i: self.spec.widgets[i].size
+                      if self.spec.widgets[i].kind == "text" else 0)
+            size_spin = QSpinBox()
+            size_spin.setRange(8, 140)
+            size_spin.setValue(int(self.spec.widgets[big].size))
+            size_spin.valueChanged.connect(
+                lambda v, gi=group_i, b=big: self.set_card_font(gi, b, v))
+            self.inspector.addRow("Value font size", size_spin)
+
         if self.selected < 0 or self.selected >= len(self.spec.widgets):
             hint = QLabel("Select a widget to edit its properties.")
             hint.setWordWrap(True)
@@ -953,6 +989,35 @@ class ThemeStudioPage(QWidget):
         self.push_undo()
         self.refresh_all()
 
+    def set_card_accent(self, group_i: int, color: str) -> None:
+        if not color.startswith("#") or len(color) not in (7, 9):
+            return
+        old = self.card_accents.get(group_i)
+        for index in self.card_groups[group_i]:
+            widget = self.spec.widgets[index]
+            if widget.kind in ("ring", "bar"):
+                widget.fill = color
+            elif widget.kind == "text" and widget.fill == old:
+                widget.fill = color
+        self.card_accents[group_i] = color
+        self.canvas.invalidate()
+        self.canvas.update()
+
+    def set_ring_style(self, group_i: int, style: str) -> None:
+        sweep = {"Full": 360.0, "Gauge": 270.0, "Half": 180.0}.get(style, 360.0)
+        for index in self.card_groups[group_i]:
+            widget = self.spec.widgets[index]
+            if widget.kind == "ring":
+                widget.start = -90.0
+                widget.sweep = sweep
+        self.canvas.invalidate()
+        self.canvas.update()
+
+    def set_card_font(self, group_i: int, big_index: int, size: int) -> None:
+        self.spec.widgets[big_index].size = max(8, size)
+        self.canvas.invalidate()
+        self.canvas.update()
+
     def set_bg_kind(self, kind: str) -> None:
         self.spec.background["kind"] = kind
         self.canvas.invalidate()
@@ -985,6 +1050,51 @@ class ThemeStudioPage(QWidget):
         self.canvas.update()
 
 
+    def eventFilter(self, source, event):
+        """Press on a component button starts a drag (click inserts instead)."""
+        from PyQt6.QtCore import QMimeData, Qt as Qt2
+        from PyQt6.QtGui import QDrag
+
+        if event.type() == event.Type.MouseButtonPress and source.text().startswith("+ "):
+            kind = source.text()[2:]
+            drag = QDrag(source)
+            mime = QMimeData()
+            mime.setData("application/x-spartacus-card", kind.encode())
+            drag.setMimeData(mime)
+            self._drag_kind = kind
+            if drag.exec(Qt2.DropAction.MoveAction) == Qt2.DropAction.MoveAction:
+                return True  # dropped on canvas: already inserted
+            self.insert_card(kind, 140, 170)  # plain click: insert near center
+            return True
+        return super().eventFilter(source, event)
+
+    def insert_card(self, kind: str, x: float, y: float) -> None:
+        self.push_undo()
+        widgets = COMPONENTS[kind](x, y, "#00E5FF")
+        group = []
+        base = len(self.spec.widgets)
+        for widget in widgets:
+            self.spec.widgets.append(widget)
+            group.append(len(self.spec.widgets) - 1)
+        self.card_groups.append(group)
+        self.card_accents[len(self.card_groups) - 1] = "#00E5FF"
+        self.selected = base
+        self.refresh_all()
+        self.status.setText(f"{kind} card added — drag it, then restyle it below.")
+
+    def drag_group(self, index: int) -> list[int]:
+        for group in self.card_groups:
+            if index in group:
+                return group
+        return [index]
+
+    def card_of(self, index: int) -> int | None:
+        for gi, group in enumerate(self.card_groups):
+            if index in group:
+                return gi
+        return None
+
+
 class ThemeCanvas(QWidget):
     """Paints the theme spec preview; click selects, drag moves widgets."""
 
@@ -1000,6 +1110,24 @@ class ThemeCanvas(QWidget):
         self._cache: Image.Image | None = None
         self._drag_index = -1
         self._grab = (0.0, 0.0)
+        self._last_pos = (0.0, 0.0)
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event):
+        if event.mimeData().hasFormat("application/x-spartacus-card"):
+            event.acceptProposedAction()
+
+    def dragMoveEvent(self, event):
+        if event.mimeData().hasFormat("application/x-spartacus-card"):
+            event.acceptProposedAction()
+
+    def dropEvent(self, event):
+        if event.mimeData().hasFormat("application/x-spartacus-card"):
+            kind = bytes(event.mimeData().data(
+                "application/x-spartacus-card")).decode()
+            pos = event.position()
+            self.owner.insert_card(kind, pos.x() - 100, pos.y() - 55)
+            event.acceptProposedAction()
 
     def invalidate(self) -> None:
         self._cache = None
@@ -1029,15 +1157,11 @@ class ThemeCanvas(QWidget):
         return (pos.x() - 2.0, pos.y() - 2.0)
 
     def mousePressEvent(self, event) -> None:
-        from PyQt6.QtCore import QPointF
-
         x, y = self._canvas_pos(event)
         index = widget_at(self.spec, x, y)
         self._drag_index = index if index is not None else -1
+        self._last_pos = (x, y)
         if index is not None:
-            widget = self.spec.widgets[index]
-            self._grab = (x - widget.x if widget.kind not in ("ring", "circle") else x - widget.cx,
-                          y - widget.y if widget.kind not in ("ring", "circle") else y - widget.cy)
             self.widget_selected.emit(index)
         else:
             self.widget_selected.emit(-1)
@@ -1047,13 +1171,17 @@ class ThemeCanvas(QWidget):
         if self._drag_index < 0 or not (event.buttons() & Qt.MouseButton.LeftButton):
             return
         x, y = self._canvas_pos(event)
-        widget = self.spec.widgets[self._drag_index]
-        if widget.kind in ("ring", "circle"):
-            widget.cx = max(-200.0, min(680.0, x - self._grab[0]))
-            widget.cy = max(-200.0, min(680.0, y - self._grab[1]))
-        else:
-            widget.x = max(-200.0, min(680.0, x - self._grab[0]))
-            widget.y = max(-200.0, min(680.0, y - self._grab[1]))
+        dx = max(-300.0, min(300.0, x - self._last_pos[0]))
+        dy = max(-300.0, min(300.0, y - self._last_pos[1]))
+        self._last_pos = (x, y)
+        for member in self.owner.drag_group(self._drag_index):
+            widget = self.spec.widgets[member]
+            if widget.kind in ("ring", "circle"):
+                widget.cx = max(-200.0, min(680.0, widget.cx + dx))
+                widget.cy = max(-200.0, min(680.0, widget.cy + dy))
+            else:
+                widget.x = max(-200.0, min(680.0, widget.x + dx))
+                widget.y = max(-200.0, min(680.0, widget.y + dy))
         self.invalidate()
         self.widget_moved.emit()
 
