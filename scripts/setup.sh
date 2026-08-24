@@ -74,12 +74,17 @@ if [ -f /etc/udev/rules.d/99-spartacus.rules ]; then
 elif sudo -n true 2>/dev/null; then
     sudo install -Dm644 "$PROJECT_DIR/packaging/99-spartacus.rules" \
         /etc/udev/rules.d/99-spartacus.rules
+    sudo install -Dm644 "$PROJECT_DIR/packaging/spartacus-rapl.conf" \
+        /etc/tmpfiles.d/spartacus-rapl.conf
+    sudo systemd-tmpfiles --create >/dev/null 2>&1 || true
     sudo udevadm control --reload-rules >/dev/null 2>&1 || true
     sudo udevadm trigger --attr-match=idVendor=3633 >/dev/null 2>&1 || true
-    ok "udev rule installed"
+    ok "udev + CPU power (RAPL) rules installed"
 else
-    warn "needs sudo — run this once later:"
+    warn "needs sudo — run this once later (USB access + CPU wattage):"
     echo "    sudo cp $PROJECT_DIR/packaging/99-spartacus.rules /etc/udev/rules.d/"
+    echo "    sudo cp $PROJECT_DIR/packaging/spartacus-rapl.conf /etc/tmpfiles.d/"
+    echo "    sudo systemd-tmpfiles --create"
     echo "    sudo udevadm control --reload-rules && sudo udevadm trigger"
 fi
 

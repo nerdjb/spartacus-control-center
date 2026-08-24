@@ -11,7 +11,7 @@
    "x": 20,
    "y": 38,
    "size": 20,
-   "fill": "#8A93A6",
+   "fill": "#7A8496",
    "text": "{date}"
   },
   {
@@ -22,6 +22,15 @@
    "fill": "#F2F4F8",
    "align": "right",
    "text": "{time}"
+  },
+  {
+   "kind": "text",
+   "x": 222,
+   "y": 40,
+   "size": 15,
+   "fill": "#FF8A3D",
+   "align": "center",
+   "text": "FPS {fps:.0} · {frametime:.0} ms"
   },
   {
    "kind": "panel",
@@ -45,7 +54,7 @@
   },
   {
    "kind": "text",
-   "x": 162.1,
+   "x": 125,
    "y": 134,
    "size": 34,
    "fill": "#F2F4F8",
@@ -66,12 +75,21 @@
   },
   {
    "kind": "text",
-   "x": 162.1,
-   "y": 196,
-   "size": 15,
+   "x": 125,
+   "y": 190,
+   "size": 14,
    "fill": "#9AA3B5",
    "align": "center",
-   "text": "{cpu_usage:.0}% · {cpu_freq:.2}GHz"
+   "text": "{cpu_usage:.0}% · {cpu_watts:.0} W"
+  },
+  {
+   "kind": "text",
+   "x": 125,
+   "y": 207,
+   "size": 12,
+   "fill": "#7A8496",
+   "align": "center",
+   "text": "{cpu_freq:.2}GHz"
   },
   {
    "kind": "panel",
@@ -95,7 +113,7 @@
   },
   {
    "kind": "text",
-   "x": 317.9,
+   "x": 355,
    "y": 134,
    "size": 34,
    "fill": "#F2F4F8",
@@ -109,7 +127,7 @@
    "w": 178,
    "h": 8,
    "track": "#313949",
-   "fill": "#FF8A3D",
+   "fill": "#4DA3FF",
    "binding": "gpu_usage",
    "min": 0,
    "max": 100
@@ -117,11 +135,20 @@
   {
    "kind": "text",
    "x": 355,
-   "y": 196,
-   "size": 15,
+   "y": 190,
+   "size": 14,
    "fill": "#9AA3B5",
    "align": "center",
-   "text": "{gpu_usage:.0}% load"
+   "text": "{gpu_usage:.0}% · {gpu_watts:.0} W"
+  },
+  {
+   "kind": "text",
+   "x": 355,
+   "y": 207,
+   "size": 12,
+   "fill": "#7A8496",
+   "align": "center",
+   "text": "{frametime:.1} ms"
   },
   {
    "kind": "panel",
@@ -145,7 +172,7 @@
   },
   {
    "kind": "text",
-   "x": 141.0,
+   "x": 125,
    "y": 296,
    "size": 34,
    "fill": "#F2F4F8",
@@ -166,12 +193,21 @@
   },
   {
    "kind": "text",
-   "x": 148.2,
-   "y": 358,
-   "size": 15,
+   "x": 125,
+   "y": 352,
+   "size": 14,
    "fill": "#9AA3B5",
    "align": "center",
    "text": "{ram_used:.1}/{ram_total:.0} GB"
+  },
+  {
+   "kind": "text",
+   "x": 125,
+   "y": 369,
+   "size": 12,
+   "fill": "#7A8496",
+   "align": "center",
+   "text": "Free {ram_free:.1} GB"
   },
   {
    "kind": "panel",
@@ -195,7 +231,7 @@
   },
   {
    "kind": "text",
-   "x": 328.4,
+   "x": 355,
    "y": 296,
    "size": 34,
    "fill": "#F2F4F8",
@@ -209,19 +245,28 @@
    "w": 178,
    "h": 8,
    "track": "#313949",
-   "fill": "#4DA3FF",
+   "fill": "#FF8A3D",
    "binding": "disk_pct",
    "min": 0,
    "max": 100
   },
   {
    "kind": "text",
-   "x": 322.6,
-   "y": 358,
-   "size": 15,
+   "x": 355,
+   "y": 352,
+   "size": 14,
    "fill": "#9AA3B5",
    "align": "center",
    "text": "{disk_used:.0}/{disk_total:.0} GB"
+  },
+  {
+   "kind": "text",
+   "x": 355,
+   "y": 369,
+   "size": 12,
+   "fill": "#7A8496",
+   "align": "center",
+   "text": "Free {disk_free:.0} GB"
   },
   {
    "kind": "panel",
@@ -237,32 +282,32 @@
   {
    "kind": "text",
    "x": 36,
-   "y": 420,
-   "size": 14,
+   "y": 416,
+   "size": 13,
    "fill": "#7A8496",
    "text": "UPLOAD"
   },
   {
    "kind": "text",
-   "x": 142,
-   "y": 420,
-   "size": 16,
+   "x": 130,
+   "y": 416,
+   "size": 15,
    "fill": "#4DA3FF",
    "text": "{net_up:.1} kB/s"
   },
   {
    "kind": "text",
    "x": 36,
-   "y": 448,
-   "size": 14,
+   "y": 444,
+   "size": 13,
    "fill": "#7A8496",
    "text": "DOWNLOAD"
   },
   {
    "kind": "text",
-   "x": 142,
-   "y": 448,
-   "size": 16,
+   "x": 130,
+   "y": 444,
+   "size": 15,
    "fill": "#4DA3FF",
    "text": "{net_down:.1} kB/s"
   },
@@ -294,35 +339,26 @@
   {
    "kind": "text",
    "x": 330,
-   "y": 420,
-   "size": 14,
+   "y": 416,
+   "size": 13,
    "fill": "#7A8496",
    "text": "PUMP"
   },
   {
    "kind": "text",
-   "x": 307.4,
-   "y": 440,
-   "size": 16,
+   "x": 330,
+   "y": 436,
+   "size": 15,
    "fill": "#F2F4F8",
    "text": "{pump_rpm:.0} RPM"
   },
   {
    "kind": "text",
-   "x": 306.7,
-   "y": 458,
-   "size": 13,
+   "x": 330,
+   "y": 454,
+   "size": 12,
    "fill": "#9AA3B5",
    "text": "FANS {fan_rpm:.0} RPM"
-  },
-  {
-   "kind": "text",
-   "x": 232,
-   "y": 40,
-   "size": 14,
-   "fill": "#FF8A3D",
-   "align": "center",
-   "text": "FPS {fps:.0} · {frametime:.1} ms"
   }
  ]
 }

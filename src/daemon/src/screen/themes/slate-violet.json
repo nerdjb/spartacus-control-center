@@ -1,9 +1,9 @@
 {
- "name": "slate",
+ "name": "slate-violet",
  "background": {
   "kind": "gradient",
-  "top": "#14171C",
-  "bottom": "#1D222B"
+  "top": "#141126",
+  "bottom": "#1C1830"
  },
  "widgets": [
   {
@@ -11,7 +11,7 @@
    "x": 20,
    "y": 38,
    "size": 20,
-   "fill": "#7A8496",
+   "fill": "#9C93B8",
    "text": "{date}"
   },
   {
@@ -19,7 +19,7 @@
    "x": 460,
    "y": 42,
    "size": 30,
-   "fill": "#F2F4F8",
+   "fill": "#F2EFFA",
    "align": "right",
    "text": "{time}"
   },
@@ -28,7 +28,7 @@
    "x": 222,
    "y": 40,
    "size": 15,
-   "fill": "#FF8A3D",
+   "fill": "#A78BFA",
    "align": "center",
    "text": "FPS {fps:.0} · {frametime:.0} ms"
   },
@@ -39,8 +39,8 @@
    "w": 218,
    "h": 150,
    "r": 14,
-   "fill": "#232833",
-   "stroke": "#2E3542",
+   "fill": "#241F38",
+   "stroke": "#332B4A",
    "stroke_w": 2
   },
   {
@@ -48,7 +48,7 @@
    "x": 125,
    "y": 94,
    "size": 16,
-   "fill": "#7A8496",
+   "fill": "#9C93B8",
    "align": "center",
    "text": "CPU"
   },
@@ -57,7 +57,7 @@
    "x": 125,
    "y": 134,
    "size": 34,
-   "fill": "#F2F4F8",
+   "fill": "#F2EFFA",
    "align": "center",
    "text": "{cpu_temp:.0}°C"
   },
@@ -67,8 +67,8 @@
    "y": 152,
    "w": 178,
    "h": 8,
-   "track": "#313949",
-   "fill": "#FF8A3D",
+   "track": "#3A3152",
+   "fill": "#A78BFA",
    "binding": "cpu_usage",
    "min": 0,
    "max": 100
@@ -78,7 +78,7 @@
    "x": 125,
    "y": 190,
    "size": 14,
-   "fill": "#9AA3B5",
+   "fill": "#B8AED0",
    "align": "center",
    "text": "{cpu_usage:.0}% · {cpu_watts:.0} W"
   },
@@ -87,7 +87,7 @@
    "x": 125,
    "y": 207,
    "size": 12,
-   "fill": "#7A8496",
+   "fill": "#9C93B8",
    "align": "center",
    "text": "{cpu_freq:.2}GHz"
   },
@@ -98,8 +98,8 @@
    "w": 218,
    "h": 150,
    "r": 14,
-   "fill": "#232833",
-   "stroke": "#2E3542",
+   "fill": "#241F38",
+   "stroke": "#332B4A",
    "stroke_w": 2
   },
   {
@@ -107,7 +107,7 @@
    "x": 355,
    "y": 94,
    "size": 16,
-   "fill": "#7A8496",
+   "fill": "#9C93B8",
    "align": "center",
    "text": "GPU"
   },
@@ -116,7 +116,7 @@
    "x": 355,
    "y": 134,
    "size": 34,
-   "fill": "#F2F4F8",
+   "fill": "#F2EFFA",
    "align": "center",
    "text": "{gpu_temp:.0}°C"
   },
@@ -126,8 +126,8 @@
    "y": 152,
    "w": 178,
    "h": 8,
-   "track": "#313949",
-   "fill": "#4DA3FF",
+   "track": "#3A3152",
+   "fill": "#F472B6",
    "binding": "gpu_usage",
    "min": 0,
    "max": 100
@@ -137,7 +137,7 @@
    "x": 355,
    "y": 190,
    "size": 14,
-   "fill": "#9AA3B5",
+   "fill": "#B8AED0",
    "align": "center",
    "text": "{gpu_usage:.0}% · {gpu_watts:.0} W"
   },
@@ -146,7 +146,7 @@
    "x": 355,
    "y": 207,
    "size": 12,
-   "fill": "#7A8496",
+   "fill": "#9C93B8",
    "align": "center",
    "text": "{frametime:.1} ms"
   },
@@ -157,8 +157,8 @@
    "w": 218,
    "h": 150,
    "r": 14,
-   "fill": "#232833",
-   "stroke": "#2E3542",
+   "fill": "#241F38",
+   "stroke": "#332B4A",
    "stroke_w": 2
   },
   {
@@ -166,7 +166,7 @@
    "x": 125,
    "y": 256,
    "size": 16,
-   "fill": "#7A8496",
+   "fill": "#9C93B8",
    "align": "center",
    "text": "RAM"
   },
@@ -175,7 +175,7 @@
    "x": 125,
    "y": 296,
    "size": 34,
-   "fill": "#F2F4F8",
+   "fill": "#F2EFFA",
    "align": "center",
    "text": "{ram_pct:.0}%"
   },
@@ -185,8 +185,8 @@
    "y": 314,
    "w": 178,
    "h": 8,
-   "track": "#313949",
-   "fill": "#4DA3FF",
+   "track": "#3A3152",
+   "fill": "#F472B6",
    "binding": "ram_pct",
    "min": 0,
    "max": 100
@@ -196,7 +196,7 @@
    "x": 125,
    "y": 352,
    "size": 14,
-   "fill": "#9AA3B5",
+   "fill": "#B8AED0",
    "align": "center",
    "text": "{ram_used:.1}/{ram_total:.0} GB"
   },
@@ -205,7 +205,7 @@
    "x": 125,
    "y": 369,
    "size": 12,
-   "fill": "#7A8496",
+   "fill": "#9C93B8",
    "align": "center",
    "text": "Free {ram_free:.1} GB"
   },
@@ -216,8 +216,8 @@
    "w": 218,
    "h": 150,
    "r": 14,
-   "fill": "#232833",
-   "stroke": "#2E3542",
+   "fill": "#241F38",
+   "stroke": "#332B4A",
    "stroke_w": 2
   },
   {
@@ -225,7 +225,7 @@
    "x": 355,
    "y": 256,
    "size": 16,
-   "fill": "#7A8496",
+   "fill": "#9C93B8",
    "align": "center",
    "text": "SSD"
   },
@@ -234,7 +234,7 @@
    "x": 355,
    "y": 296,
    "size": 34,
-   "fill": "#F2F4F8",
+   "fill": "#F2EFFA",
    "align": "center",
    "text": "{disk_pct:.0}%"
   },
@@ -244,8 +244,8 @@
    "y": 314,
    "w": 178,
    "h": 8,
-   "track": "#313949",
-   "fill": "#FF8A3D",
+   "track": "#3A3152",
+   "fill": "#A78BFA",
    "binding": "disk_pct",
    "min": 0,
    "max": 100
@@ -255,7 +255,7 @@
    "x": 355,
    "y": 352,
    "size": 14,
-   "fill": "#9AA3B5",
+   "fill": "#B8AED0",
    "align": "center",
    "text": "{disk_used:.0}/{disk_total:.0} GB"
   },
@@ -264,7 +264,7 @@
    "x": 355,
    "y": 369,
    "size": 12,
-   "fill": "#7A8496",
+   "fill": "#9C93B8",
    "align": "center",
    "text": "Free {disk_free:.0} GB"
   },
@@ -275,8 +275,8 @@
    "w": 218,
    "h": 72,
    "r": 14,
-   "fill": "#232833",
-   "stroke": "#2E3542",
+   "fill": "#241F38",
+   "stroke": "#332B4A",
    "stroke_w": 2
   },
   {
@@ -284,7 +284,7 @@
    "x": 36,
    "y": 416,
    "size": 13,
-   "fill": "#7A8496",
+   "fill": "#9C93B8",
    "text": "UPLOAD"
   },
   {
@@ -292,7 +292,7 @@
    "x": 130,
    "y": 416,
    "size": 15,
-   "fill": "#4DA3FF",
+   "fill": "#F472B6",
    "text": "{net_up:.1} kB/s"
   },
   {
@@ -300,7 +300,7 @@
    "x": 36,
    "y": 444,
    "size": 13,
-   "fill": "#7A8496",
+   "fill": "#9C93B8",
    "text": "DOWNLOAD"
   },
   {
@@ -308,7 +308,7 @@
    "x": 130,
    "y": 444,
    "size": 15,
-   "fill": "#4DA3FF",
+   "fill": "#F472B6",
    "text": "{net_down:.1} kB/s"
   },
   {
@@ -318,8 +318,8 @@
    "w": 218,
    "h": 72,
    "r": 14,
-   "fill": "#232833",
-   "stroke": "#2E3542",
+   "fill": "#241F38",
+   "stroke": "#332B4A",
    "stroke_w": 2
   },
   {
@@ -328,8 +328,8 @@
    "cy": 428,
    "r": 24,
    "thickness": 7,
-   "track": "#313949",
-   "fill": "#FF8A3D",
+   "track": "#3A3152",
+   "fill": "#A78BFA",
    "binding": "pump_pct",
    "min": 0,
    "max": 100,
@@ -341,7 +341,7 @@
    "x": 330,
    "y": 416,
    "size": 13,
-   "fill": "#7A8496",
+   "fill": "#9C93B8",
    "text": "PUMP"
   },
   {
@@ -349,7 +349,7 @@
    "x": 330,
    "y": 436,
    "size": 15,
-   "fill": "#F2F4F8",
+   "fill": "#F2EFFA",
    "text": "{pump_rpm:.0} RPM"
   },
   {
@@ -357,7 +357,7 @@
    "x": 330,
    "y": 454,
    "size": 12,
-   "fill": "#9AA3B5",
+   "fill": "#B8AED0",
    "text": "FANS {fan_rpm:.0} RPM"
   }
  ]
