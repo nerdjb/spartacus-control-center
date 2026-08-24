@@ -181,6 +181,20 @@ impl USBMonitor {
         state.pump_rpm = rpm_data.pump_rpm;
         state.fan_rpm = rpm_data.fan_rpm;
 
+        // Fallback: when the Linker reports no fan tach (radiator fans
+        // wired to the motherboard instead of its AIO FAN header), surface
+        // the motherboard's own hwmon fan speeds instead of zeros.
+        if state.fan_rpm.iter().all(|rpm| *rpm == 0) {
+            let mb_fans = crate::telemetry::sysfs::motherboard_fan_rpms().await;
+            if !mb_fans.is_empty() {
+                let mut merged = [0u16; 6];
+                for (index, rpm) in mb_fans.into_iter().enumerate() {
+                    merged[index] = rpm;
+                }
+                state.fan_rpm = merged;
+            }
+        }
+
         Ok(())
     }
 

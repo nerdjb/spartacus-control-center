@@ -295,3 +295,44 @@ fn delta_watts(prev: &mut Option<(std::time::Instant, f64)>, energy_j: f64) -> O
     *prev = Some((now, energy_j));
     watts.filter(|w| *w >= 0.0 && *w < 1000.0)
 }
+
+/// Motherboard fan speeds (RPM) from hwmon `fan*_input` inputs
+/// (Super-I/O chips: nct67xx, it86xx, ...). Zeros/unused headers skipped.
+/// Used as a fallback when the Linker controller reports no fan tach
+/// (radiator fans wired to the motherboard instead of its AIO FAN header).
+pub async fn motherboard_fan_rpms() -> Vec<u16> {
+    let mut fans: Vec<u16> = Vec::new();
+    let Ok(mut entries) = fs::read_dir("/sys/class/hwmon").await else {
+        return fans;
+    };
+    let mut dirs: Vec<PathBuf> = Vec::new();
+    while let Ok(Some(entry)) = entries.next_entry().await {
+        dirs.push(entry.path());
+    }
+    dirs.sort();
+    for dir in dirs {
+        let Ok(inputs) = fs::read_dir(&dir).await else {
+            continue;
+        };
+        let mut names: Vec<PathBuf> = Vec::new();
+        let mut entries = inputs;
+        while let Ok(Some(entry)) = entries.next_entry().await {
+            let name = entry.file_name().to_string_lossy().to_string();
+            if name.starts_with("fan") && name.ends_with("_input") {
+                names.push(entry.path());
+            }
+        }
+        names.sort();
+        for path in names {
+            if let Ok(raw) = fs::read_to_string(path).await {
+                if let Ok(rpm) = raw.trim().parse::<u16>() {
+                    if rpm > 0 {
+                        fans.push(rpm);
+                    }
+                }
+            }
+        }
+    }
+    fans.truncate(6);
+    fans
+}

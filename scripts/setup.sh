@@ -79,6 +79,8 @@ elif sudo -n true 2>/dev/null; then
     sudo systemd-tmpfiles --create >/dev/null 2>&1 || true
     sudo udevadm control --reload-rules >/dev/null 2>&1 || true
     sudo udevadm trigger --attr-match=idVendor=3633 >/dev/null 2>&1 || true
+    # motherboard fan/temp sensors (Gigabyte X870E: Nuvoton Super-I/O)
+    sudo modprobe nct6775 >/dev/null 2>&1 || sudo modprobe it8613 >/dev/null 2>&1 || true
     ok "udev + CPU power (RAPL) rules installed"
 else
     warn "needs sudo — run this once later (USB access + CPU wattage):"
