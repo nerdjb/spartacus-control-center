@@ -1051,22 +1051,38 @@ class ThemeStudioPage(QWidget):
 
 
     def eventFilter(self, source, event):
-        """Press on a component button starts a drag (click inserts instead)."""
+        """Component buttons: click inserts; press+drag drops on the canvas.
+        The QDrag starts from the move handler — starting it inside the press
+        handler crashes Qt's button release handling."""
+        if source.text().startswith("+ "):
+            etype = event.type()
+            if etype == event.Type.MouseButtonPress:
+                self._press_kind = source.text()[2:]
+                self._press_pos = event.globalPosition().toPoint()
+                return False
+            if etype == event.Type.MouseMove and getattr(self, "_press_kind", None):
+                gp = event.globalPosition().toPoint()
+                if (gp - self._press_pos).manhattanLength() > 10:
+                    kind = self._press_kind
+                    self._press_kind = None
+                    self._start_component_drag(kind, source)
+                    return True
+            if etype == event.Type.MouseButtonRelease and getattr(self, "_press_kind", None):
+                kind = self._press_kind
+                self._press_kind = None
+                self.insert_card(kind, 140, 170)
+                return True
+        return super().eventFilter(source, event)
+
+    def _start_component_drag(self, kind: str, source) -> None:
         from PyQt6.QtCore import QMimeData, Qt as Qt2
         from PyQt6.QtGui import QDrag
 
-        if event.type() == event.Type.MouseButtonPress and source.text().startswith("+ "):
-            kind = source.text()[2:]
-            drag = QDrag(source)
-            mime = QMimeData()
-            mime.setData("application/x-spartacus-card", kind.encode())
-            drag.setMimeData(mime)
-            self._drag_kind = kind
-            if drag.exec(Qt2.DropAction.MoveAction) == Qt2.DropAction.MoveAction:
-                return True  # dropped on canvas: already inserted
-            self.insert_card(kind, 140, 170)  # plain click: insert near center
-            return True
-        return super().eventFilter(source, event)
+        drag = QDrag(source)
+        mime = QMimeData()
+        mime.setData("application/x-spartacus-card", kind.encode())
+        drag.setMimeData(mime)
+        drag.exec(Qt2.DropAction.MoveAction)
 
     def insert_card(self, kind: str, x: float, y: float) -> None:
         self.push_undo()
