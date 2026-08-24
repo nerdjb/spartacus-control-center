@@ -40,7 +40,8 @@ fn newest_csv(dir: &Path) -> Option<PathBuf> {
     let mut best: Option<(SystemTime, PathBuf)> = None;
     for entry in fs::read_dir(dir).ok()?.flatten() {
         let path = entry.path();
-        if path.extension()?.to_str()? != "csv" {
+        let name = path.file_name()?.to_string_lossy().to_lowercase();
+        if !name.ends_with(".csv") || name.contains("_summary") {
             continue;
         }
         let modified = entry.metadata().ok()?.modified().ok()?;
@@ -53,18 +54,44 @@ fn newest_csv(dir: &Path) -> Option<PathBuf> {
 
 fn parse_last_row(path: &Path) -> Result<(f32, f32)> {
     let content = fs::read_to_string(path)?;
-    let mut lines = content.lines().filter(|l| !l.trim().is_empty());
-    let header = lines.next().ok_or_else(|| anyhow::anyhow!("empty log"))?;
-    let cols: Vec<String> = header.split(',').map(|c| c.trim().to_lowercase()).collect();
-    let fps_i = cols.iter().position(|c| c == "fps").ok_or_else(|| anyhow::anyhow!("no fps column"))?;
-    let ft_i = cols
+    let lines: Vec<&str> = content.lines().filter(|l| !l.trim().is_empty()).collect();
+
+    // MangoHud CSVs begin with metadata lines (os,cpu,gpu,...); the real
+    // column header is the first line that contains an "fps" column.
+    let mut header_index = None;
+    let mut fps_index = None;
+    let mut frametime_index = None;
+    for (index, line) in lines.iter().enumerate() {
+        let cols: Vec<String> = line.split(',').map(|c| c.trim().to_lowercase()).collect();
+        if let Some(fps) = cols.iter().position(|c| c == "fps") {
+            header_index = Some(index);
+            fps_index = Some(fps);
+            frametime_index = Some(
+                cols.iter()
+                    .position(|c| c == "frametime" || c == "frame_time")
+                    .unwrap_or(fps),
+            );
+            break;
+        }
+    }
+    let header_index = header_index.ok_or_else(|| anyhow::anyhow!("no fps column"))?;
+    let fps_index = fps_index.unwrap();
+    let frametime_index = frametime_index.unwrap();
+
+    let last = lines
         .iter()
-        .position(|c| c == "frametime" || c == "frame_time")
-        .unwrap_or(fps_i);
-    let last = lines.last().ok_or_else(|| anyhow::anyhow!("no rows"))?;
+        .skip(header_index + 1)
+        .last()
+        .ok_or_else(|| anyhow::anyhow!("no data rows"))?;
     let cells: Vec<&str> = last.split(',').collect();
-    let fps = cells.get(fps_i).and_then(|v| v.trim().parse().ok()).unwrap_or(0.0);
-    let frametime = cells.get(ft_i).and_then(|v| v.trim().parse().ok()).unwrap_or(0.0);
+    let fps = cells
+        .get(fps_index)
+        .and_then(|v| v.trim().parse().ok())
+        .unwrap_or(0.0);
+    let frametime = cells
+        .get(frametime_index)
+        .and_then(|v| v.trim().parse().ok())
+        .unwrap_or(0.0);
     Ok((fps, frametime))
 }
 
@@ -86,6 +113,27 @@ mod tests {
         let (fps, frametime) = latest_sample(&dir).unwrap();
         assert!((fps - 141.9).abs() < 0.01);
         assert!((frametime - 7.05).abs() < 0.01);
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn parses_real_mangohud_layout() {
+        let dir = std::env::temp_dir().join("spartacus-mangohud-real");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let file = dir.join("PioneerGame_2026-08-24_23-37-02.csv");
+        fs::write(
+            &file,
+            "os,cpu,gpu,ram,kernel,driver,cpuscheduler\n\
+             Steam Runtime 4,AMD Ryzen 7 9700X,RADV,,7.2,powersave\n\
+             cpu,gpu,cpu_temp,gpu_temp,cpu_power,gpu_power,fps,frametime\n\
+             12,5,51,44,45,220,141.7,7.05\n\
+             14,9,52,45,52,231,138.2,7.23\n",
+        )
+        .unwrap();
+        let (fps, frametime) = latest_sample(&dir).unwrap();
+        assert!((fps - 138.2).abs() < 0.01);
+        assert!((frametime - 7.23).abs() < 0.01);
         let _ = fs::remove_dir_all(&dir);
     }
 
