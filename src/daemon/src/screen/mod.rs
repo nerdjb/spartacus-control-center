@@ -97,27 +97,30 @@ impl ScreenRenderer {
     }
 
     fn reload_spec(&mut self) {
+        // A user/system spec file always wins over builtins, so designs edited
+        // in Theme Studio (e.g. a customized cards.json) take effect.
+        if let Some(path) = theme_spec::find_spec_file(&self.theme) {
+            match std::fs::read_to_string(&path)
+                .map_err(|e| e.to_string())
+                .and_then(|s| theme_spec::parse_spec(&s))
+            {
+                Ok(spec) => {
+                    log::info!("Theme '{}' loaded from {}", self.theme, path.display());
+                    self.spec = Some(spec);
+                    return;
+                }
+                Err(e) => log::warn!("Theme file {} invalid: {e}", path.display()),
+            }
+        }
         self.spec = match self.theme.as_str() {
             "neon" => theme_spec::parse_spec(theme_spec::NEON_JSON).ok(),
             "aurora" => theme_spec::parse_spec(theme_spec::AURORA_JSON).ok(),
             "slate" => theme_spec::parse_spec(theme_spec::SLATE_JSON).ok(),
             "cards" | "cards-light" | "colorful" | "rings" => None,
-            other => match theme_spec::find_spec_file(other) {
-                Some(path) => match std::fs::read_to_string(&path)
-                    .map_err(|e| e.to_string())
-                    .and_then(|s| theme_spec::parse_spec(&s))
-                {
-                    Ok(spec) => Some(spec),
-                    Err(e) => {
-                        log::warn!("Theme file {} invalid: {e}", path.display());
-                        None
-                    }
-                },
-                None => {
-                    log::warn!("Theme '{other}' not found; using cards");
-                    None
-                }
-            },
+            other => {
+                log::warn!("Theme '{other}' not found; using cards");
+                None
+            }
         };
     }
 
