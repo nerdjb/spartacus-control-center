@@ -328,13 +328,13 @@ class ThemeStudioPage(QWidget):
         outer = QVBoxLayout(self)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.addWidget(self.stack)
+        browse_page = QWidget()
+        self._build_browse(browse_page)
+        self.stack.addWidget(browse_page)      # index 0 = landing card grid
         editor_page = QWidget()
         editor_root = QVBoxLayout(editor_page)
         self._build_ui(editor_root)
-        self.stack.addWidget(editor_page)
-        browse_page = QWidget()
-        self._build_browse(browse_page)
-        self.stack.addWidget(browse_page)
+        self.stack.addWidget(editor_page)      # index 1 = designer
         self.stack.setCurrentIndex(0)
 
         self.timer = QTimer(self)
@@ -576,7 +576,7 @@ class ThemeStudioPage(QWidget):
 
     def _edit_preset(self, name: str) -> None:
         self.load_preset(name)
-        self.stack.setCurrentIndex(0)
+        self.stack.setCurrentIndex(1)
         self.status.setText(f"Editing '{name}' — APPLY TO DAEMON when done.")
 
     def _thumbnail_pixmap(self, spec):
