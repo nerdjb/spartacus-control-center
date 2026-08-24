@@ -163,6 +163,7 @@ impl ScreenRenderer {
     pub fn refresh_period_ms(&self, configured: u64) -> u64 {
         match &self.spec {
             Some(spec) if theme_spec::wants_animation(spec) => configured.min(100),
+            Some(spec) if theme_spec::uses_gaming_metrics(spec) => configured.min(250),
             _ => configured,
         }
     }

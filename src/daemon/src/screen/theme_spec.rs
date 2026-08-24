@@ -586,6 +586,18 @@ pub fn wants_animation(spec: &ThemeSpec) -> bool {
     animated(&spec.background.path) || spec.widgets.iter().any(|w| animated(&w.path))
 }
 
+/// True when the design displays fps/frametime: the theme stream should
+/// refresh faster than the slow default so the numbers feel live.
+pub fn uses_gaming_metrics(spec: &ThemeSpec) -> bool {
+    let has = |s: &str| s.contains("{fps") || s.contains("{frametime");
+    spec.widgets.iter().any(|w| {
+        w.binding.as_deref() == Some("fps")
+            || w.binding.as_deref() == Some("frametime")
+            || has(&w.text.clone().unwrap_or_default())
+            || has(&w.center_text.clone().unwrap_or_default())
+    })
+}
+
 /// Parse a spec from JSON text.
 pub fn parse_spec(json: &str) -> Result<ThemeSpec, String> {
     serde_json::from_str(json).map_err(|e| e.to_string())

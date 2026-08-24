@@ -30,10 +30,26 @@ impl TelemetryCollector {
     pub async fn run(mut self) {
         log::info!("Telemetry Collector starting...");
         let mut tick = interval(Duration::from_millis(1000));
+        let mut fps_tick = interval(Duration::from_millis(200));
 
         loop {
-            tick.tick().await;
-            self.update_all().await;
+            tokio::select! {
+                _ = tick.tick() => self.update_all().await,
+                _ = fps_tick.tick() => self.update_fps().await,
+            }
+        }
+    }
+
+    /// FPS/frametime sample on a fast path: gamers notice a second of lag.
+    async fn update_fps(&mut self) {
+        let sample = mangohud::latest_sample_from_dirs();
+        let mut state = self.state.write().await;
+        if let Some((fps, frametime)) = sample {
+            state.fps = fps;
+            state.frametime_ms = frametime;
+        } else {
+            state.fps = 0.0;
+            state.frametime_ms = 0.0;
         }
     }
 
@@ -72,13 +88,6 @@ impl TelemetryCollector {
             }
             if let Some(w) = gpu_watts {
                 state.gpu_watts = w;
-            }
-            if let Some((fps, frametime)) = mangohud::latest_sample_from_dirs() {
-                state.fps = fps;
-                state.frametime_ms = frametime;
-            } else {
-                state.fps = 0.0;
-                state.frametime_ms = 0.0;
             }
         }
 
