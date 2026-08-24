@@ -1,0 +1,363 @@
+{
+ "name": "slate-rose-gif",
+ "background": {
+  "kind": "image",
+  "path": "assets/slate-rose-bg.gif"
+ },
+ "widgets": [
+  {
+   "kind": "text",
+   "x": 20,
+   "y": 38,
+   "size": 20,
+   "fill": "#A8899A",
+   "text": "{date}"
+  },
+  {
+   "kind": "text",
+   "x": 460,
+   "y": 42,
+   "size": 30,
+   "fill": "#F8F0F4",
+   "align": "right",
+   "text": "{time}"
+  },
+  {
+   "kind": "text",
+   "x": 222,
+   "y": 40,
+   "size": 15,
+   "fill": "#FF4D94",
+   "align": "center",
+   "text": "FPS {fps:.0} · {frametime:.0} ms"
+  },
+  {
+   "kind": "panel",
+   "x": 16,
+   "y": 64,
+   "w": 218,
+   "h": 150,
+   "r": 14,
+   "fill": "#2A2128",
+   "stroke": "#3A2C35",
+   "stroke_w": 2
+  },
+  {
+   "kind": "text",
+   "x": 125,
+   "y": 94,
+   "size": 16,
+   "fill": "#A8899A",
+   "align": "center",
+   "text": "CPU"
+  },
+  {
+   "kind": "text",
+   "x": 125,
+   "y": 134,
+   "size": 34,
+   "fill": "#F8F0F4",
+   "align": "center",
+   "text": "{cpu_temp:.0}°C"
+  },
+  {
+   "kind": "bar",
+   "x": 36,
+   "y": 152,
+   "w": 178,
+   "h": 8,
+   "track": "#45323D",
+   "fill": "#FF4D94",
+   "binding": "cpu_usage",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "kind": "text",
+   "x": 125,
+   "y": 190,
+   "size": 14,
+   "fill": "#C4A3B5",
+   "align": "center",
+   "text": "{cpu_usage:.0}% · {cpu_watts:.0} W"
+  },
+  {
+   "kind": "text",
+   "x": 125,
+   "y": 207,
+   "size": 12,
+   "fill": "#A8899A",
+   "align": "center",
+   "text": "{cpu_freq:.2}GHz"
+  },
+  {
+   "kind": "panel",
+   "x": 246,
+   "y": 64,
+   "w": 218,
+   "h": 150,
+   "r": 14,
+   "fill": "#2A2128",
+   "stroke": "#3A2C35",
+   "stroke_w": 2
+  },
+  {
+   "kind": "text",
+   "x": 355,
+   "y": 94,
+   "size": 16,
+   "fill": "#A8899A",
+   "align": "center",
+   "text": "GPU"
+  },
+  {
+   "kind": "text",
+   "x": 355,
+   "y": 134,
+   "size": 34,
+   "fill": "#F8F0F4",
+   "align": "center",
+   "text": "{gpu_temp:.0}°C"
+  },
+  {
+   "kind": "bar",
+   "x": 266,
+   "y": 152,
+   "w": 178,
+   "h": 8,
+   "track": "#45323D",
+   "fill": "#FF9EC4",
+   "binding": "gpu_usage",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "kind": "text",
+   "x": 355,
+   "y": 190,
+   "size": 14,
+   "fill": "#C4A3B5",
+   "align": "center",
+   "text": "{gpu_usage:.0}% · {gpu_watts:.0} W"
+  },
+  {
+   "kind": "text",
+   "x": 355,
+   "y": 207,
+   "size": 12,
+   "fill": "#A8899A",
+   "align": "center",
+   "text": "{frametime:.1} ms"
+  },
+  {
+   "kind": "panel",
+   "x": 16,
+   "y": 226,
+   "w": 218,
+   "h": 150,
+   "r": 14,
+   "fill": "#2A2128",
+   "stroke": "#3A2C35",
+   "stroke_w": 2
+  },
+  {
+   "kind": "text",
+   "x": 125,
+   "y": 256,
+   "size": 16,
+   "fill": "#A8899A",
+   "align": "center",
+   "text": "RAM"
+  },
+  {
+   "kind": "text",
+   "x": 125,
+   "y": 296,
+   "size": 34,
+   "fill": "#F8F0F4",
+   "align": "center",
+   "text": "{ram_pct:.0}%"
+  },
+  {
+   "kind": "bar",
+   "x": 36,
+   "y": 314,
+   "w": 178,
+   "h": 8,
+   "track": "#45323D",
+   "fill": "#FF9EC4",
+   "binding": "ram_pct",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "kind": "text",
+   "x": 125,
+   "y": 352,
+   "size": 14,
+   "fill": "#C4A3B5",
+   "align": "center",
+   "text": "{ram_used:.1}/{ram_total:.0} GB"
+  },
+  {
+   "kind": "text",
+   "x": 125,
+   "y": 369,
+   "size": 12,
+   "fill": "#A8899A",
+   "align": "center",
+   "text": "Free {ram_free:.1} GB"
+  },
+  {
+   "kind": "panel",
+   "x": 246,
+   "y": 226,
+   "w": 218,
+   "h": 150,
+   "r": 14,
+   "fill": "#2A2128",
+   "stroke": "#3A2C35",
+   "stroke_w": 2
+  },
+  {
+   "kind": "text",
+   "x": 355,
+   "y": 256,
+   "size": 16,
+   "fill": "#A8899A",
+   "align": "center",
+   "text": "FPS"
+  },
+  {
+   "kind": "text",
+   "x": 355,
+   "y": 296,
+   "size": 34,
+   "fill": "#F8F0F4",
+   "align": "center",
+   "text": "{fps:.0}"
+  },
+  {
+   "kind": "bar",
+   "x": 266,
+   "y": 314,
+   "w": 178,
+   "h": 8,
+   "track": "#45323D",
+   "fill": "#FF4D94",
+   "binding": "fps",
+   "min": 0,
+   "max": 240
+  },
+  {
+   "kind": "text",
+   "x": 355,
+   "y": 352,
+   "size": 14,
+   "fill": "#C4A3B5",
+   "align": "center",
+   "text": "{frametime:.1} ms frame time"
+  },
+  {
+   "kind": "text",
+   "x": 355,
+   "y": 369,
+   "size": 12,
+   "fill": "#A8899A",
+   "align": "center",
+   "text": "frames per second"
+  },
+  {
+   "kind": "panel",
+   "x": 16,
+   "y": 392,
+   "w": 218,
+   "h": 72,
+   "r": 14,
+   "fill": "#2A2128",
+   "stroke": "#3A2C35",
+   "stroke_w": 2
+  },
+  {
+   "kind": "text",
+   "x": 36,
+   "y": 416,
+   "size": 13,
+   "fill": "#A8899A",
+   "text": "UPLOAD"
+  },
+  {
+   "kind": "text",
+   "x": 130,
+   "y": 416,
+   "size": 15,
+   "fill": "#FF9EC4",
+   "text": "{net_up:.1} kB/s"
+  },
+  {
+   "kind": "text",
+   "x": 36,
+   "y": 444,
+   "size": 13,
+   "fill": "#A8899A",
+   "text": "DOWNLOAD"
+  },
+  {
+   "kind": "text",
+   "x": 130,
+   "y": 444,
+   "size": 15,
+   "fill": "#FF9EC4",
+   "text": "{net_down:.1} kB/s"
+  },
+  {
+   "kind": "panel",
+   "x": 246,
+   "y": 392,
+   "w": 218,
+   "h": 72,
+   "r": 14,
+   "fill": "#2A2128",
+   "stroke": "#3A2C35",
+   "stroke_w": 2
+  },
+  {
+   "kind": "ring",
+   "cx": 292,
+   "cy": 428,
+   "r": 24,
+   "thickness": 7,
+   "track": "#45323D",
+   "fill": "#FF4D94",
+   "binding": "pump_pct",
+   "min": 0,
+   "max": 100,
+   "center_text": "{pump_pct:.0}",
+   "center_size": 13
+  },
+  {
+   "kind": "text",
+   "x": 330,
+   "y": 416,
+   "size": 13,
+   "fill": "#A8899A",
+   "text": "PUMP"
+  },
+  {
+   "kind": "text",
+   "x": 330,
+   "y": 436,
+   "size": 15,
+   "fill": "#F8F0F4",
+   "text": "{pump_rpm:.0} RPM"
+  },
+  {
+   "kind": "text",
+   "x": 330,
+   "y": 454,
+   "size": 12,
+   "fill": "#C4A3B5",
+   "text": "FANS {fan_rpm:.0} RPM"
+  }
+ ]
+}
