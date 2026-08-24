@@ -116,7 +116,7 @@
   },
   {
    "kind": "text",
-   "x": 460.0,
+   "x": 436.9,
    "y": 209.0,
    "size": 21,
    "fill": "#ffffff",
@@ -148,7 +148,7 @@
   },
   {
    "kind": "text",
-   "x": 460.0,
+   "x": 390.4,
    "y": 140.1,
    "size": 23,
    "fill": "#ffffff",
@@ -157,7 +157,7 @@
   },
   {
    "kind": "text",
-   "x": 467.0,
+   "x": 386.7,
    "y": 434.0,
    "size": 36,
    "fill": "#ffffff",
@@ -166,7 +166,7 @@
   },
   {
    "kind": "text",
-   "x": 450.0,
+   "x": 417.1,
    "y": 331.8,
    "size": 19,
    "fill": "#ffffff",
@@ -189,7 +189,7 @@
   },
   {
    "kind": "text",
-   "x": 71.0,
+   "x": 99.5,
    "y": 142.5,
    "size": 28,
    "fill": "#ffffff",
@@ -198,7 +198,7 @@
   },
   {
    "kind": "text",
-   "x": 71.0,
+   "x": 82.1,
    "y": 376.5,
    "size": 28,
    "fill": "#ffffff",
@@ -231,18 +231,6 @@
    "fill": "#ffffff",
    "align": "center",
    "text": "{net_up:.1}kb/s"
-  },
-  {
-   "kind": "bar",
-   "x": 182.4,
-   "y": 356.5,
-   "w": 92.0,
-   "h": 17.2,
-   "track": "#dddddd",
-   "fill": "#111111",
-   "binding": "",
-   "min": 0,
-   "max": 100
   },
   {
    "kind": "text",
@@ -386,14 +374,6 @@
    "fill": "#ffffff",
    "align": "center",
    "text": "C:"
-  },
-  {
-   "kind": "image",
-   "x": 162.0,
-   "y": 351.0,
-   "w": 20.0,
-   "h": 30.0,
-   "path": "assets/9t_2.png"
   },
   {
    "kind": "text",

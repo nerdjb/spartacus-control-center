@@ -36,9 +36,9 @@
   },
   {
    "kind": "text",
-   "x": 368.0,
+   "x": 376,
    "y": 169.5,
-   "size": 43,
+   "size": 24,
    "fill": "#ffffff",
    "align": "center",
    "text": "{ram_pct}"
@@ -59,7 +59,7 @@
   },
   {
    "kind": "text",
-   "x": 68.0,
+   "x": 150.6,
    "y": 166.5,
    "size": 43,
    "fill": "#ffffff",
@@ -68,7 +68,7 @@
   },
   {
    "kind": "text",
-   "x": 68.0,
+   "x": 150.6,
    "y": 379.5,
    "size": 43,
    "fill": "#ffffff",
@@ -181,9 +181,9 @@
   },
   {
    "kind": "text",
-   "x": 375.0,
+   "x": 376,
    "y": 379.5,
-   "size": 43,
+   "size": 24,
    "fill": "#ffffff",
    "align": "center",
    "text": "{disk_pct}"
@@ -216,7 +216,7 @@
   },
   {
    "kind": "text",
-   "x": 444.0,
+   "x": 393.5,
    "y": 445.5,
    "size": 19,
    "fill": "#3fece8",

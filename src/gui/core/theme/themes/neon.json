@@ -1,130 +1,130 @@
 {
-  "name": "neon",
-  "background": {
-    "kind": "gradient",
-    "top": "#0A0E1E",
-    "bottom": "#131A33"
+ "name": "neon",
+ "background": {
+  "kind": "gradient",
+  "top": "#0A0E1E",
+  "bottom": "#131A33"
+ },
+ "widgets": [
+  {
+   "kind": "text",
+   "x": 16,
+   "y": 36,
+   "size": 19,
+   "fill": "#8FA3D0",
+   "text": "{date}"
   },
-  "widgets": [
-    {
-      "kind": "text",
-      "x": 16,
-      "y": 36,
-      "size": 19,
-      "fill": "#8FA3D0",
-      "text": "{date}"
-    },
-    {
-      "kind": "text",
-      "x": 240,
-      "y": 44,
-      "size": 34,
-      "fill": "#FFFFFF",
-      "align": "center",
-      "text": "{time}"
-    },
-    {
-      "kind": "text",
-      "x": 464,
-      "y": 36,
-      "size": 19,
-      "fill": "#8FA3D0",
-      "align": "right",
-      "text": "GPU {gpu_temp:.0}C"
-    },
-    {
-      "kind": "ring",
-      "cx": 150,
-      "cy": 250,
-      "r": 105,
-      "thickness": 16,
-      "track": "#1B2340",
-      "fill": "#00E5FF",
-      "binding": "cpu_temp",
-      "min": 20,
-      "max": 95,
-      "center_text": "{cpu_temp:.0}°",
-      "center_size": 52
-    },
-    {
-      "kind": "text",
-      "x": 150,
-      "y": 182,
-      "size": 17,
-      "fill": "#5F729E",
-      "align": "center",
-      "text": "CPU"
-    },
-    {
-      "kind": "text",
-      "x": 150,
-      "y": 374,
-      "size": 21,
-      "fill": "#9FB4E8",
-      "align": "center",
-      "text": "{cpu_usage:.0}% · {cpu_freq:.2}GHz"
-    },
-    {
-      "kind": "ring",
-      "cx": 372,
-      "cy": 168,
-      "r": 72,
-      "thickness": 12,
-      "track": "#1B2340",
-      "fill": "#FF3DDC",
-      "binding": "gpu_temp",
-      "min": 25,
-      "max": 95,
-      "center_text": "{gpu_temp:.0}°",
-      "center_size": 30
-    },
-    {
-      "kind": "text",
-      "x": 372,
-      "y": 258,
-      "size": 15,
-      "fill": "#5F729E",
-      "align": "center",
-      "text": "GPU {gpu_usage:.0}%"
-    },
-    {
-      "kind": "ring",
-      "cx": 372,
-      "cy": 348,
-      "r": 72,
-      "thickness": 12,
-      "track": "#1B2340",
-      "fill": "#7C4DFF",
-      "binding": "ram_pct",
-      "min": 0,
-      "max": 100,
-      "center_text": "{ram_pct:.0}%",
-      "center_size": 30
-    },
-    {
-      "kind": "text",
-      "x": 372,
-      "y": 438,
-      "size": 15,
-      "fill": "#5F729E",
-      "align": "center",
-      "text": "{ram_used:.0}/{ram_total:.0}G"
-    },
-    {
-      "kind": "text",
-      "x": 16,
-      "y": 446,
-      "size": 16,
-      "fill": "#3DDC97",
-      "text": "↑ {net_up:.1} kB/s"
-    },
-    {
-      "kind": "text",
-      "x": 16,
-      "y": 468,
-      "size": 16,
-      "fill": "#FF8A80",
-      "text": "↓ {net_down:.1} kB/s"
-    }
-  ]
+  {
+   "kind": "text",
+   "x": 240,
+   "y": 44,
+   "size": 34,
+   "fill": "#FFFFFF",
+   "align": "center",
+   "text": "{time}"
+  },
+  {
+   "kind": "text",
+   "x": 464,
+   "y": 36,
+   "size": 19,
+   "fill": "#8FA3D0",
+   "align": "right",
+   "text": "GPU {gpu_temp:.0}C"
+  },
+  {
+   "kind": "ring",
+   "cx": 150,
+   "cy": 250,
+   "r": 105,
+   "thickness": 16,
+   "track": "#1B2340",
+   "fill": "#00E5FF",
+   "binding": "cpu_temp",
+   "min": 20,
+   "max": 95,
+   "center_text": "{cpu_temp:.0}°",
+   "center_size": 52
+  },
+  {
+   "kind": "text",
+   "x": 150,
+   "y": 182,
+   "size": 17,
+   "fill": "#5F729E",
+   "align": "center",
+   "text": "CPU"
+  },
+  {
+   "kind": "text",
+   "x": 225.3,
+   "y": 374,
+   "size": 21,
+   "fill": "#9FB4E8",
+   "align": "center",
+   "text": "{cpu_usage:.0}% · {cpu_freq:.2}GHz"
+  },
+  {
+   "kind": "ring",
+   "cx": 372,
+   "cy": 168,
+   "r": 72,
+   "thickness": 12,
+   "track": "#1B2340",
+   "fill": "#FF3DDC",
+   "binding": "gpu_temp",
+   "min": 25,
+   "max": 95,
+   "center_text": "{gpu_temp:.0}°",
+   "center_size": 30
+  },
+  {
+   "kind": "text",
+   "x": 372,
+   "y": 258,
+   "size": 15,
+   "fill": "#5F729E",
+   "align": "center",
+   "text": "GPU {gpu_usage:.0}%"
+  },
+  {
+   "kind": "ring",
+   "cx": 372,
+   "cy": 348,
+   "r": 72,
+   "thickness": 12,
+   "track": "#1B2340",
+   "fill": "#7C4DFF",
+   "binding": "ram_pct",
+   "min": 0,
+   "max": 100,
+   "center_text": "{ram_pct:.0}%",
+   "center_size": 30
+  },
+  {
+   "kind": "text",
+   "x": 341.1,
+   "y": 438,
+   "size": 15,
+   "fill": "#5F729E",
+   "align": "center",
+   "text": "{ram_used:.0}/{ram_total:.0}G"
+  },
+  {
+   "kind": "text",
+   "x": 16,
+   "y": 446,
+   "size": 16,
+   "fill": "#3DDC97",
+   "text": "↑ {net_up:.1} kB/s"
+  },
+  {
+   "kind": "text",
+   "x": 16,
+   "y": 468,
+   "size": 16,
+   "fill": "#FF8A80",
+   "text": "↓ {net_down:.1} kB/s"
+  }
+ ]
 }

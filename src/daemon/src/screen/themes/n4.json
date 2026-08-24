@@ -58,7 +58,7 @@
   },
   {
    "kind": "text",
-   "x": 77.0,
+   "x": 147.2,
    "y": 150.0,
    "size": 42,
    "fill": "#ffffff",
@@ -113,9 +113,9 @@
   },
   {
    "kind": "text",
-   "x": 240.0,
+   "x": 240,
    "y": 249.0,
-   "size": 53,
+   "size": 46,
    "fill": "#ffffff",
    "align": "center",
    "text": "{ram_pct}"
@@ -208,7 +208,7 @@
   },
   {
    "kind": "text",
-   "x": 399.0,
+   "x": 322,
    "y": 150.0,
    "size": 42,
    "fill": "#ffffff",
@@ -226,39 +226,12 @@
   },
   {
    "kind": "text",
-   "x": 375.0,
-   "y": 300.0,
-   "size": 14,
-   "fill": "#ffffff",
-   "align": "center",
-   "text": "Speed"
-  },
-  {
-   "kind": "text",
    "x": 421.0,
    "y": 267.0,
    "size": 14,
    "fill": "#1fe6fe",
    "align": "center",
    "text": "{gpu_temp}°C"
-  },
-  {
-   "kind": "text",
-   "x": 438.0,
-   "y": 300.0,
-   "size": 14,
-   "fill": "#1fe6fe",
-   "align": "center",
-   "text": "G"
-  },
-  {
-   "kind": "text",
-   "x": 415.0,
-   "y": 300.0,
-   "size": 14,
-   "fill": "#1fe6fe",
-   "align": "center",
-   "text": "1.23"
   },
   {
    "kind": "text",
@@ -287,7 +260,7 @@
   },
   {
    "kind": "text",
-   "x": 414.0,
+   "x": 386.4,
    "y": 378.0,
    "size": 17,
    "fill": "#ffffff",
@@ -301,18 +274,6 @@
    "w": 26.0,
    "h": 39.0,
    "path": "assets/n4_3.png"
-  },
-  {
-   "kind": "bar",
-   "x": 53.8,
-   "y": 422.9,
-   "w": 352.0,
-   "h": 16.5,
-   "track": "#003059",
-   "fill": "#0078e6",
-   "binding": "",
-   "min": 0,
-   "max": 100
   }
  ]
 }

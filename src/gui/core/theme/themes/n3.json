@@ -26,7 +26,7 @@
   },
   {
    "kind": "text",
-   "x": 66.0,
+   "x": 72.2,
    "y": 28.5,
    "size": 22,
    "fill": "#ffffff",
@@ -92,9 +92,9 @@
   },
   {
    "kind": "text",
-   "x": 65.0,
+   "x": 64,
    "y": 145.5,
-   "size": 30,
+   "size": 22,
    "fill": "#000000",
    "align": "center",
    "text": "{cpu_usage}%"
@@ -119,18 +119,18 @@
   },
   {
    "kind": "text",
-   "x": 41.0,
+   "x": 52,
    "y": 262.5,
-   "size": 14,
+   "size": 13,
    "fill": "#000000",
    "align": "center",
    "text": "{cpu_freq:.2}GHz"
   },
   {
    "kind": "text",
-   "x": 95.0,
+   "x": 100,
    "y": 262.5,
-   "size": 14,
+   "size": 13,
    "fill": "#000000",
    "align": "center",
    "text": "{cpu_temp}°C"
@@ -164,9 +164,9 @@
   },
   {
    "kind": "text",
-   "x": 181.0,
+   "x": 180,
    "y": 145.5,
-   "size": 30,
+   "size": 22,
    "fill": "#000000",
    "align": "center",
    "text": "{gpu_usage}%"
@@ -203,18 +203,9 @@
   },
   {
    "kind": "text",
-   "x": 152.0,
+   "x": 168,
    "y": 262.5,
-   "size": 14,
-   "fill": "#000000",
-   "align": "center",
-   "text": "1.23 GHz"
-  },
-  {
-   "kind": "text",
-   "x": 210.0,
-   "y": 262.5,
-   "size": 14,
+   "size": 13,
    "fill": "#000000",
    "align": "center",
    "text": "{gpu_temp}°C"
@@ -242,9 +233,9 @@
   },
   {
    "kind": "text",
-   "x": 297.0,
+   "x": 295,
    "y": 145.5,
-   "size": 30,
+   "size": 22,
    "fill": "#000000",
    "align": "center",
    "text": "{ram_pct}%"
@@ -269,16 +260,16 @@
   },
   {
    "kind": "text",
-   "x": 414.0,
+   "x": 413,
    "y": 145.5,
-   "size": 30,
+   "size": 22,
    "fill": "#000000",
    "align": "center",
    "text": "{disk_pct}%"
   },
   {
    "kind": "text",
-   "x": 414.0,
+   "x": 399.4,
    "y": 241.5,
    "size": 19,
    "fill": "#000000",
@@ -332,15 +323,6 @@
    "fill": "#000000",
    "align": "center",
    "text": "{net_down:.1}kb/s"
-  },
-  {
-   "kind": "text",
-   "x": 405.0,
-   "y": 438.0,
-   "size": 23,
-   "fill": "#d4237a",
-   "align": "center",
-   "text": "VOL"
   },
   {
    "kind": "text",

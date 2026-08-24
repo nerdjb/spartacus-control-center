@@ -36,9 +36,9 @@
   },
   {
    "kind": "text",
-   "x": 269.0,
+   "x": 269,
    "y": 232.5,
-   "size": 33,
+   "size": 22,
    "fill": "#ffffff",
    "align": "center",
    "text": "{ram_pct}"
@@ -95,7 +95,7 @@
   },
   {
    "kind": "text",
-   "x": 77.0,
+   "x": 138,
    "y": 234.0,
    "size": 37,
    "fill": "#ffffff",
@@ -248,7 +248,7 @@
   },
   {
    "kind": "text",
-   "x": 92.0,
+   "x": 108.2,
    "y": 61.5,
    "size": 42,
    "fill": "#ffffff",
@@ -289,9 +289,9 @@
   },
   {
    "kind": "text",
-   "x": 402.0,
+   "x": 295,
    "y": 237.0,
-   "size": 50,
+   "size": 34,
    "fill": "#ffffff",
    "align": "center",
    "text": "{disk_pct}"
@@ -345,18 +345,6 @@
    "w": 28.0,
    "h": 42.0,
    "path": "assets/n8_1.png"
-  },
-  {
-   "kind": "bar",
-   "x": 340.2,
-   "y": 378.6,
-   "w": 120.0,
-   "h": 18.0,
-   "track": "#dddddd",
-   "fill": "#111111",
-   "binding": "",
-   "min": 0,
-   "max": 100
   },
   {
    "kind": "image",

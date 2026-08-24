@@ -90,9 +90,9 @@
   },
   {
    "kind": "text",
-   "x": 407.0,
-   "y": 42.0,
-   "size": 19,
+   "x": 420,
+   "y": 42,
+   "size": 14,
    "fill": "#ffffff",
    "align": "center",
    "text": "RTX4060Ti-8G"
@@ -140,16 +140,16 @@
   },
   {
    "kind": "text",
-   "x": 71.0,
+   "x": 155,
    "y": 121.5,
-   "size": 37,
+   "size": 30,
    "fill": "#ffffff",
    "align": "center",
    "text": "{cpu_usage}"
   },
   {
    "kind": "text",
-   "x": 442.0,
+   "x": 405.3,
    "y": 105.0,
    "size": 19,
    "fill": "#ffffff",
@@ -190,9 +190,9 @@
   },
   {
    "kind": "text",
-   "x": 105.0,
-   "y": 384.0,
-   "size": 37,
+   "x": 105,
+   "y": 384,
+   "size": 26,
    "fill": "#ffffff",
    "align": "center",
    "text": "{ram_pct}"
@@ -220,7 +220,7 @@
   },
   {
    "kind": "text",
-   "x": 404.0,
+   "x": 403.5,
    "y": 435.0,
    "size": 18,
    "fill": "#ffffff",
@@ -265,8 +265,8 @@
   },
   {
    "kind": "text",
-   "x": 271.0,
-   "y": 39.0,
+   "x": 303,
+   "y": 39,
    "size": 19,
    "fill": "#b095ea",
    "align": "center",
@@ -397,7 +397,7 @@
   },
   {
    "kind": "text",
-   "x": 433.0,
+   "x": 401.0,
    "y": 363.0,
    "size": 22,
    "fill": "#ffffff",
