@@ -31,6 +31,7 @@ DEMO_METRICS = {
     "disk_used": 192.0, "disk_total": 240.0, "disk_free": 48.0, "disk_pct": 80.0,
     "net_up": 220.4, "net_down": 1400.0,
     "pump_rpm": 2380, "fan_rpm": 1240, "pump_pct": 68.0,
+    "fps": 143.0, "frametime": 7.0,
 }
 
 _font_cache: dict[tuple[str, int], ImageFont.FreeTypeFont] = {}

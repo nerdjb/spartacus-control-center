@@ -30,6 +30,8 @@ pub struct Metrics {
     pub net_down_kbps: f32,
     pub pump_rpm: u16,
     pub fan_rpm: u16,
+    pub fps: f32,
+    pub frametime_ms: f32,
 }
 
 impl Metrics {
@@ -204,6 +206,8 @@ pub fn snapshot(state: &crate::DaemonState) -> Metrics {
         date: now.format("%Y-%m-%d").to_string(),
         cpu_usage: state.cpu_usage,
         cpu_temp: state.cpu_temp,
+        fps: state.fps,
+        frametime_ms: state.frametime_ms,
         cpu_freq_ghz: state.cpu_freq_ghz,
         gpu_usage: state.gpu_usage,
         gpu_temp: state.gpu_temp,

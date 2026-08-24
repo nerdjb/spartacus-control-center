@@ -8,7 +8,7 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 use tokio::time::{interval, Duration};
 
-use super::sysfs;
+use super::{mangohud, sysfs};
 
 pub struct TelemetryCollector {
     state: Arc<RwLock<DaemonState>>,
@@ -63,6 +63,13 @@ impl TelemetryCollector {
             }
             state.net_down_kbps = net.0;
             state.net_up_kbps = net.1;
+            if let Some((fps, frametime)) = mangohud::latest_sample_from_dirs() {
+                state.fps = fps;
+                state.frametime_ms = frametime;
+            } else {
+                state.fps = 0.0;
+                state.frametime_ms = 0.0;
+            }
         }
 
         debug!(

@@ -457,11 +457,11 @@
   {
    "kind": "text",
    "x": 240,
-   "y": 456,
+   "y": 438,
    "size": 15,
-   "fill": "#7A689A",
+   "fill": "#F26AA0",
    "align": "center",
-   "text": "SPARTACUS CONTROL"
+   "text": "FPS {fps:.0}  ·  {frametime:.1} ms"
   }
  ]
 }

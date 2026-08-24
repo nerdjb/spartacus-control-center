@@ -20,6 +20,7 @@ BINDINGS = [
     "disk_used", "disk_total", "disk_free", "disk_pct",
     "net_up", "net_down",
     "pump_rpm", "fan_rpm", "pump_pct",
+    "fps", "frametime",
 ]
 
 WIDGET_KINDS = ["panel", "text", "ring", "bar", "rect", "circle"]

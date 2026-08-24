@@ -172,14 +172,19 @@ pub fn cards(c: &mut Canvas, m: &Metrics, font: &Font) {
     ring_pct(c, font, cx, cy - 12, 42.0, 11.0, m.pump_pct(), [0xf6, 0xdf, 0xea], PINK, 22.0);
     c.text(font, cx, cy + 44, 14.0, [0x77, 0x77, 0x82], "PUMP", Align::Center);
 
-    // Footer
+    // Footer: live gaming stats when a MangoHud session is active
+    let footer = if m.fps > 1.0 {
+        format!("FPS {:.0}  \u{b7}  {:.1} MS", m.fps, m.frametime_ms)
+    } else {
+        "SPARTACUS CONTROL".to_string()
+    };
     c.text(
         font,
         240,
         456,
         15.0,
-        [0x7a, 0x68, 0x9a],
-        "SPARTACUS CONTROL",
+        if m.fps > 1.0 { [0xf2, 0x6a, 0xa0] } else { [0x7a, 0x68, 0x9a] },
+        &footer,
         Align::Center,
     );
 }

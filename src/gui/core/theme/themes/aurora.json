@@ -234,6 +234,15 @@
    "fill": "#7FBFA8",
    "align": "right",
    "text": "{pump_rpm:.0} RPM"
+  },
+  {
+   "kind": "text",
+   "x": 210,
+   "y": 100,
+   "size": 14,
+   "fill": "#3DDC97",
+   "align": "center",
+   "text": "FPS {fps:.0} · {frametime:.1} ms"
   }
  ]
 }

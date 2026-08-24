@@ -71,6 +71,8 @@ pub struct DaemonState {
     pub disk_used_gb: f32,
     pub disk_total_gb: f32,
     pub net_up_kbps: f32,
+    pub fps: f32,
+    pub frametime_ms: f32,
     pub net_down_kbps: f32,
     pub pump_curve: Vec<(u8, u8)>, // (Temp%, RPM%)
     pub fan_curves: Vec<Vec<(u8, u8)>>,
@@ -101,6 +103,8 @@ impl Default for DaemonState {
             disk_used_gb: 0.0,
             disk_total_gb: 0.0,
             net_up_kbps: 0.0,
+            fps: 0.0,
+            frametime_ms: 0.0,
             net_down_kbps: 0.0,
             pump_curve: vec![(30, 30), (50, 60), (70, 100)],
             fan_curves: vec![vec![(30, 30), (50, 60), (70, 100)]; 6],
@@ -133,6 +137,8 @@ async fn main() -> Result<()> {
             disk_used_gb: 192.4,
             disk_total_gb: 240.0,
             net_up_kbps: 0.0,
+            fps: 143.0,
+            frametime_ms: 7.0,
             net_down_kbps: 0.0,
             pump_rpm: 1785,
             fan_rpm: 1300,
@@ -165,6 +171,8 @@ async fn main() -> Result<()> {
             net_down_kbps: 1400.0,
             pump_rpm: 2380,
             fan_rpm: 1240,
+            fps: 143.0,
+            frametime_ms: 7.0,
         };
         let frame = renderer.render_spec_frame(&spec, &m);
         std::fs::write(&args[3], &frame)?;

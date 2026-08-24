@@ -49,6 +49,8 @@ pub struct DaemonStatus {
     pub disk_used_gb: f32,
     pub disk_total_gb: f32,
     pub net_up_kbps: f32,
+    pub fps: f32,
+    pub frametime_ms: f32,
     pub net_down_kbps: f32,
     pub fan_control_auto: bool,
 }

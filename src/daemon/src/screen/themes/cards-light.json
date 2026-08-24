@@ -436,6 +436,15 @@
    "fill": "#777782",
    "align": "center",
    "text": "PUMP"
+  },
+  {
+   "kind": "text",
+   "x": 20,
+   "y": 62,
+   "size": 13,
+   "fill": "#6A3DC8",
+   "align": "left",
+   "text": "FPS {fps:.0}  ·  {frametime:.1} ms"
   }
  ]
 }

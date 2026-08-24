@@ -235,6 +235,8 @@ fn binding_value(m: &Metrics, key: &str) -> Option<Val> {
         "pump_rpm" => Val::Num(m.pump_rpm as f32),
         "fan_rpm" => Val::Num(m.fan_rpm as f32),
         "pump_pct" => Val::Num(m.pump_pct()),
+        "fps" => Val::Num(m.fps),
+        "frametime" => Val::Num(m.frametime_ms),
         _ => return None,
     };
     Some(v)

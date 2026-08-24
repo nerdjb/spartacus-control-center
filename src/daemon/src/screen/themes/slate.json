@@ -314,6 +314,15 @@
    "size": 13,
    "fill": "#9AA3B5",
    "text": "FANS {fan_rpm:.0} RPM"
+  },
+  {
+   "kind": "text",
+   "x": 232,
+   "y": 40,
+   "size": 14,
+   "fill": "#FF8A3D",
+   "align": "center",
+   "text": "FPS {fps:.0} · {frametime:.1} ms"
   }
  ]
 }
