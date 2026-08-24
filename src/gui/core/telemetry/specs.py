@@ -2,7 +2,7 @@
 
 One :class:`MetricSpec` per canonical metric key. Keys are the contract between
 the daemon snapshot (`GetStatus` / `GetTelemetry`), this pipeline, LCD template
-strings (``CPU: {cpu_temp}°C``) and QDT variable mapping.
+strings (``CPU: {cpu_temp}°C``).
 """
 
 from __future__ import annotations

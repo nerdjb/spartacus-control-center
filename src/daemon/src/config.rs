@@ -137,8 +137,38 @@ pub async fn load_config() -> Result<Config> {
     Ok(Config::default())
 }
 
-// -- persisted fan curves -------------------------------------------------------
+// -- persisted theme selection --------------------------------------------------
 //
+// The active theme is stored in its own tiny file so runtime switches via
+// IPC survive restarts without rewriting a possibly /etc-managed config.toml.
+
+fn theme_override_path() -> PathBuf {
+    PathBuf::from(format!(
+        "{}/.config/spartacus/theme",
+        std::env::var("HOME").unwrap_or_default()
+    ))
+}
+
+/// Blocking write from the USB monitor loop (tiny file, called rarely).
+pub fn persist_screen_theme(name: &str) {
+    let path = theme_override_path();
+    if let Some(parent) = path.parent() {
+        let _ = std::fs::create_dir_all(parent);
+    }
+    if let Err(e) = std::fs::write(&path, name) {
+        log::warn!("Could not persist theme: {}", e);
+    }
+}
+
+/// Startup override: the last theme chosen at runtime wins over config files.
+pub fn load_theme_override() -> Option<String> {
+    std::fs::read_to_string(theme_override_path())
+        .ok()
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty())
+}
+
+// -- persisted fan curves -------------------------------------------------------
 // Fan curves edited in the GUI are stored separately from the static daemon
 // config so IPC writes never rewrite /etc-managed settings.
 

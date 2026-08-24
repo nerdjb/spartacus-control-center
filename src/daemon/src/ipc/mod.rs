@@ -62,6 +62,7 @@ pub enum DaemonCommand {
     SetFanSpeed { channel: usize, speed: u8, reply: oneshot::Sender<Result<(), String>> },
     SetLighting { mode: String, color: [u8; 3], speed: u8, saturation: u8, reply: oneshot::Sender<Result<(), String>> },
     SetMotherboardSync { enable: bool, reply: oneshot::Sender<Result<(), String>> },
+    SetTheme { name: String, reply: oneshot::Sender<Result<(), String>> },
 }
 
 pub type CommandSender = mpsc::Sender<DaemonCommand>;
@@ -83,6 +84,7 @@ pub enum RPCMethod {
     SetFanCurve,
     SetLighting,
     SetMotherboardSync,
+    SetTheme,
 }
 
 impl RPCMethod {
@@ -103,6 +105,7 @@ impl RPCMethod {
             "SetFanCurve" => Some(Self::SetFanCurve),
             "SetLighting" => Some(Self::SetLighting),
             "SetMotherboardSync" => Some(Self::SetMotherboardSync),
+            "SetTheme" => Some(Self::SetTheme),
             _ => None,
         }
     }

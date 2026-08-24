@@ -294,6 +294,10 @@ async fn handle_rpc_request(
             let enable = request.params.get("enable").and_then(|v| v.as_bool()).unwrap_or(false);
             send_command(commands, |reply| DaemonCommand::SetMotherboardSync { enable, reply }).await.map(|_| serde_json::json!({"success": true, "enable": enable}))
         }
+        super::RPCMethod::SetTheme => {
+            let name = request.params.get("name").and_then(|v| v.as_str()).unwrap_or("cards").to_string();
+            send_command(commands, |reply| DaemonCommand::SetTheme { name: name.clone(), reply }).await.map(|_| serde_json::json!({"success": true, "theme": name}))
+        }
         _ => {
             Err(JsonRpcError {
                 code: -32603,
@@ -462,6 +466,7 @@ mod control_mode_tests {
                 DaemonCommand::LcdSetConfig { reply, .. } => reply,
                 DaemonCommand::SetLighting { reply, .. } => reply,
                 DaemonCommand::SetMotherboardSync { reply, .. } => reply,
+                DaemonCommand::SetTheme { reply, .. } => reply,
             };
             let _ = reply.send(Ok(()));
         }

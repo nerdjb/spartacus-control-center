@@ -80,17 +80,18 @@ class TestFullStack(unittest.TestCase):
         self.assertAlmostEqual(model_value, 47.5, places=6)
         self.assertIs(self.window.telemetry.quality("cpu_temp"), MetricQuality.GOOD)
 
-    def test_send_to_lcd_delivers_frame_bytes(self):
-        before = len(self.daemon.received_frames)
+    def test_apply_theme_reaches_daemon(self):
         studio = self.window.studio
-        studio.send_to_lcd()   # daemon offline? no: mock accepts everything
+        studio.spec.name = "my-test-theme"
+        studio.apply_to_daemon()
         pump_events(0.3, self.app)
-        self.assertEqual(len(self.daemon.received_frames), before + 1)
-        frame = self.daemon.received_frames[-1]
-        self.assertTrue(frame.startswith(b"\xff\xd8"))
-        self.assertGreater(len(frame), 1000)   # a real rendered frame, not stub
+        themes = [c["params"].get("name") for c in self.daemon.commands_for("SetTheme")]
+        self.assertIn("my-test-theme", themes)
+        saved = Path.home() / ".config" / "spartacus" / "themes" / "my-test-theme.json"
+        self.assertTrue(saved.exists())
         status_text = studio.status.text()
-        self.assertIn("accepted", status_text)
+        self.assertIn("natively", status_text)
+        saved.unlink(missing_ok=True)
 
     def test_fan_curve_apply_reaches_daemon(self):
         fans_page = self.window.pages.widget(2)

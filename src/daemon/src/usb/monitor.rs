@@ -130,6 +130,11 @@ impl USBMonitor {
                 let result = self.controller.motherboard_sync(enable).await.map_err(|e| e.to_string());
                 let _ = reply.send(result);
             }
+            DaemonCommand::SetTheme { name, reply } => {
+                self.renderer.set_theme(&name);
+                crate::config::persist_screen_theme(&name);
+                let _ = reply.send(Ok(()));
+            }
         }
     }
 

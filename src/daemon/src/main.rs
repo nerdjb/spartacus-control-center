@@ -119,8 +119,7 @@ async fn main() -> Result<()> {
 
     // Offline theme preview: --render-theme <name> <out.raw>
     let args: Vec<String> = std::env::args().collect();
-    if args.len() >= 4 && args[1] == "--render-theme" {
-        let m = screen::Metrics {
+    if args.len() >= 4 && args[1] == "--render-theme" {        let m = screen::Metrics {
             time: "22:26:51".into(),
             date: "2026-04-29".into(),
             cpu_usage: 11.0,
@@ -144,6 +143,34 @@ async fn main() -> Result<()> {
         return Ok(());
     }
 
+    // Offline spec preview: --render-spec <file.json> <out.raw>
+    if args.len() >= 4 && args[1] == "--render-spec" {
+        let json = std::fs::read_to_string(&args[2])?;
+        let spec = screen::theme_spec::parse_spec(&json).map_err(anyhow::Error::msg)?;
+        let renderer = screen::ScreenRenderer::new("cards")?;
+        let m = screen::Metrics {
+            time: "22:26:51".into(),
+            date: "2026-04-29".into(),
+            cpu_usage: 37.0,
+            cpu_temp: 63.0,
+            cpu_freq_ghz: 3.77,
+            gpu_usage: 22.0,
+            gpu_temp: 45.0,
+            ram_used_gb: 14.1,
+            ram_total_gb: 16.0,
+            disk_used_gb: 192.4,
+            disk_total_gb: 240.0,
+            net_up_kbps: 220.4,
+            net_down_kbps: 1400.0,
+            pump_rpm: 2380,
+            fan_rpm: 1240,
+        };
+        let frame = renderer.render_spec_frame(&spec, &m);
+        std::fs::write(&args[3], &frame)?;
+        info!("Rendered spec {} -> {}", args[2], args[3]);
+        return Ok(());
+    }
+
     info!("╔═══════════════════════════════════════════════════╗");
     info!("║  DeepCool Spartacus Control Center - Daemon v0.1  ║");
     info!("║  USB Device Monitor & Cooling Controller          ║");
@@ -152,6 +179,9 @@ async fn main() -> Result<()> {
     // Load configuration
     let config = config::load_config().await?;
     info!("Configuration loaded: {:?}", config);
+    // A theme chosen at runtime (IPC SetTheme) wins over config files.
+    let theme = config::load_theme_override().unwrap_or_else(|| config.screen.theme.clone());
+    let _ = theme;
 
     // Initialize shared daemon state
     let state = Arc::new(RwLock::new(DaemonState::default()));
@@ -181,7 +211,7 @@ async fn main() -> Result<()> {
     });
 
     // Start USB monitor (LCD Display + Controller)
-    let theme = config.screen.theme.clone();
+    let theme = config::load_theme_override().unwrap_or_else(|| config.screen.theme.clone());
     let refresh_ms = config.screen.refresh_ms;
     let usb_monitor = usb::monitor::USBMonitor::new(state.clone(), &theme, refresh_ms, command_rx);
     let usb_handle = tokio::spawn(async move {

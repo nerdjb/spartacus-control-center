@@ -2,6 +2,7 @@
 
 pub mod draw;
 pub mod helpers;
+pub mod theme_spec;
 pub mod themes;
 pub mod themes_cards;
 pub mod themes_fx;
@@ -61,6 +62,7 @@ impl Metrics {
 pub struct ScreenRenderer {
     font: Font,
     theme: String,
+    spec: Option<theme_spec::ThemeSpec>,
 }
 
 impl ScreenRenderer {
@@ -75,25 +77,70 @@ impl ScreenRenderer {
         let font =
             Font::from_bytes(bytes, settings).map_err(|e| anyhow::anyhow!("font parse: {e}"))?;
         log::info!("Screen renderer ready (theme: {theme})");
-        Ok(Self {
+        let mut renderer = Self {
             font,
             theme: theme.to_string(),
-        })
+            spec: None,
+        };
+        renderer.reload_spec();
+        Ok(renderer)
     }
 
+    /// Switch themes by name: built-ins ("cards", "cards-light", "colorful",
+    /// "rings"), embedded spec themes ("neon", "aurora", "slate") or a spec
+    /// file looked up in ~/.config/spartacus/themes, /etc/spartacus/themes
+    /// and /usr/share/spartacus/themes.
     pub fn set_theme(&mut self, theme: &str) {
         self.theme = theme.to_string();
+        self.reload_spec();
+        log::info!("Theme set to {theme}");
+    }
+
+    fn reload_spec(&mut self) {
+        self.spec = match self.theme.as_str() {
+            "neon" => theme_spec::parse_spec(theme_spec::NEON_JSON).ok(),
+            "aurora" => theme_spec::parse_spec(theme_spec::AURORA_JSON).ok(),
+            "slate" => theme_spec::parse_spec(theme_spec::SLATE_JSON).ok(),
+            "cards" | "cards-light" | "colorful" | "rings" => None,
+            other => match theme_spec::find_spec_file(other) {
+                Some(path) => match std::fs::read_to_string(&path)
+                    .map_err(|e| e.to_string())
+                    .and_then(|s| theme_spec::parse_spec(&s))
+                {
+                    Ok(spec) => Some(spec),
+                    Err(e) => {
+                        log::warn!("Theme file {} invalid: {e}", path.display());
+                        None
+                    }
+                },
+                None => {
+                    log::warn!("Theme '{other}' not found; using cards");
+                    None
+                }
+            },
+        };
     }
 
     /// Render the configured theme into an RGB888 480x480 frame.
     pub fn render(&self, m: &Metrics) -> Vec<u8> {
         let mut canvas = draw::Canvas::new(480, 480);
+        if let Some(spec) = &self.spec {
+            theme_spec::render(&mut canvas, spec, m, &self.font);
+            return canvas.px;
+        }
         match self.theme.as_str() {
             "colorful" => themes::colorful(&mut canvas, m, &self.font),
             "cards-light" => themes::cards_light(&mut canvas, m, &self.font),
             "rings" => themes::rings(&mut canvas, m, &self.font),
             _ => themes::cards(&mut canvas, m, &self.font),
         }
+        canvas.px
+    }
+
+    /// Render one specific spec (offline preview CLI).
+    pub fn render_spec_frame(&self, spec: &theme_spec::ThemeSpec, m: &Metrics) -> Vec<u8> {
+        let mut canvas = draw::Canvas::new(480, 480);
+        theme_spec::render(&mut canvas, spec, m, &self.font);
         canvas.px
     }
 }

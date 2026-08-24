@@ -1,12 +1,8 @@
 # SPARTACUS Control Center
 
-**Linux control suite for the DeepCool SPARTACUS 360 / 420 AIO cooler** — a hardware-verified
-Rust daemon implementing the reverse-engineered USB protocol, plus a PyQt6 desktop app with
-live telemetry, fan-curve automation, ARGB lighting control and a full **LCD Studio** for
-designing screens on the 480×480 pump-cap display.
+**Linux control suite for the DeepCool SPARTACUS 360 / 420 AIO cooler** — a hardware-verified Rust daemon implementing the reverse-engineered USB protocol, plus a PyQt6 desktop app with live telemetry, fan-curve automation, ARGB lighting and a **Theme Studio** for designing 480×480 screens that the daemon renders natively.
 
-Everything shown on the panel or in the UI flows through one validated telemetry pipeline:
-bad sensors show `--`, never fake zeros; spikes are filtered; stale data is labelled.
+Everything shown on the panel or in the UI flows through one validated telemetry pipeline: bad sensors show `--`, never fake zeros; spikes are filtered; stale data is labelled.
 
 ---
 
@@ -18,8 +14,8 @@ bad sensors show `--`, never fake zeros; spikes are filtered; stale data is labe
 4. [Installation](#installation)
 5. [Uninstallation](#uninstallation)
 6. [Using the app](#using-the-app)
-7. [LCD Studio](#lcd-studio) · [Designing your first screen](#designing-your-first-screen) · [Telemetry bindings reference](#telemetry-bindings-reference) · [Importing LCD-Wiki `.qdt` themes](#importing-lcd-wiki-qdt-themes)
-8. [Live Mode](#live-mode-stream-to-the-panel)
+7. [Theme engine](#theme-engine) · [Built-in themes](#built-in-themes) · [Theme spec format](#theme-spec-format) · [Bindings reference](#bindings-reference)
+8. [Theme Studio](#theme-studio)
 9. [Telemetry quality system](#telemetry-quality-system)
 10. [Files & formats](#files--formats)
 11. [IPC API reference](#ipc-api-reference)
@@ -34,30 +30,33 @@ bad sensors show `--`, never fake zeros; spikes are filtered; stale data is labe
 ## What can it do?
 
 ### Monitor
+
 - Live CPU / GPU temperature, usage and frequency; RAM used/total; disk usage; network up/down rates
 - Pump, AIO-fan and EXT1/EXT2 RPM read from the Linker controller (~2 Hz passive polls that can never change fan speeds as a side effect)
 - Per-metric quality badges everywhere: `47°C ● GOOD (83 ms)` — latency included
 
 ### Cool
+
 - Manual duty **sliders** for Pump / AIO / EXT1 / EXT2 (hard 40 % pump floor)
 - Per-channel fan **curves**: drag points on a temperature → PWM graph, apply them to the daemon, which stores them (`~/.config/spartacus/curves.toml`), restores them at boot and evaluates them every second
 - Automatic ↔ manual arbitration: moving a slider pauses the curve loop; applying a curve resumes it — they never fight
 
 ### Light
+
 - Static color, Rainbow and Breathing effects with color picker, speed and saturation
 - One-click **Motherboard ARGB sync** (and reclaiming software control)
 
 ### Design & display
-- **LCD Studio** — an honest editor on an exact 480×480 canvas: text, telemetry-bound text, ring gauges, images, shapes, gradient backgrounds; layers with lock/hide/reorder/duplicate; grouping; alignment guides; snap-to-grid; zoom 25–200 %; undo/redo; inspector panel
-- Six built-in editable templates (Apple Style, MSI Style, Black Tech, Minimal Cyber, Dual Ring, Triple Ring)
-- **Realistic preview** composited into a pump-block frame before you commit
-- **SEND TO LCD** pushes your design straight to the panel through the daemon
-- **Live Mode** streams your layout with live telemetry at 15/30/60 FPS off the GUI thread
-- **QDT import** loads lcdwiki.com themes (round `480X480-*.qdt` and rectangular), extracts their images and converts widgets into fully editable native layers
+
+- **Theme engine (Rust)** — the daemon renders the panel natively, continuously, at cards quality: stamped-circle arcs, ring gauges, progress bars, rounded panels, antialiased text, gradients. No frame streaming needed; the design *runs* on the daemon
+- **Seven built-in themes**: `cards`, `cards-light`, `colorful`, `rings` (classic Rust layouts) plus **`neon`**, **`aurora`**, **`slate`** — three modern data-driven designs
+- **Theme Studio** — design your own screen with the exact primitives the Rust renderer draws (panels, rings, bars, text, shapes), with live telemetry in the preview, then **APPLY TO DAEMON**: your design is saved and rendered natively, permanently
+- Theme choice survives reboots; custom themes live in `~/.config/spartacus/themes/`
 
 ### Trust
-- 67 Python + 13 Rust tests including golden-vector checksum tests and a full-stack test that runs the real GUI against a mock daemon
-- Verified end-to-end on real hardware, including a 123-frame live stream at 30 FPS
+
+- 48 Python + 16 Rust tests including golden-vector checksum tests and a full-stack test that runs the real GUI against a mock daemon
+- Verified end-to-end on real hardware
 
 ---
 
@@ -67,13 +66,31 @@ bad sensors show `--`, never fake zeros; spikes are filtered; stale data is labe
 
 The pump cap enumerates as two independent USB devices:
 
-| Device | VID:PID | Transport | Function |
-|---|---|---|---|
-| Display Controller | `3633:0027` | Vendor bulk | 480×480 circular LCD |
-| Fan & Lighting "Linker" | `3633:002d` | HID interrupt | Pump/fans PWM, ARGB lighting, tachometry |
+Device
 
-> ⚠️ The product ID `002d` must be written **lowercase** in udev rules — sysfs reports hex lowercase and udev matching is case-sensitive.
-> The official DeepCool software must not be running; it holds the devices.
+VID:PID
+
+Transport
+
+Function
+
+Display Controller
+
+`3633:0027`
+
+Vendor bulk
+
+480×480 circular LCD
+
+Fan & Lighting "Linker"
+
+`3633:002d`
+
+HID interrupt
+
+Pump/fans PWM, ARGB lighting, tachometry
+
+> ⚠️ The product ID `002d` must be written **lowercase** in udev rules — sysfs reports hex lowercase and udev matching is case-sensitive. The official DeepCool software must not be running; it holds the devices.
 
 ---
 
@@ -97,8 +114,6 @@ cd src/gui && python3 main.py
 
 You should see `● Connected` / `Pipeline LIVE` in the top bar and the built-in dashboard on the pump LCD.
 
----
-
 ## Installation
 
 ### Arch Linux (PKGBUILD)
@@ -120,7 +135,7 @@ sudo ./scripts/install.sh               # /usr/bin + /usr/share/spartacus + udev
 ```bash
 install -m755 src/daemon/target/release/spartacus-daemon ~/.local/bin/
 mkdir -p ~/.local/share/spartacus
-cp -r src/gui/{ui,core,daemon,main.py} ~/.local/share/spartacus/
+cp -r src/gui/{ui,core,daemon,models,resources,main.py} ~/.local/share/spartacus/
 cat > ~/.local/bin/spartacus-control-center <<'SH'
 #!/bin/bash
 exec python3 "$HOME/.local/share/spartacus/main.py" "$@"
@@ -149,12 +164,8 @@ sudo pacman -Rns spartacus-control-center
 
 ```bash
 sudo ./scripts/uninstall.sh            # removes program files, keeps your data
-sudo ./scripts/uninstall.sh --purge    # also wipes configs, curves and caches
+sudo ./scripts/uninstall.sh --purge    # also wipes configs, themes and caches
 ```
-
-The uninstaller stops processes, removes the systemd user unit, `/usr/bin/spartacus-{daemon,control-center}`,
-`/usr/share/spartacus/`, desktop launcher + icons, the udev rule (with reload), and `/etc/spartacus/`
-(only with `--purge`, since it may contain your edits).
 
 **User-local install (~/.local):**
 
@@ -166,25 +177,12 @@ rm -rf ~/.local/share/spartacus
 **Wipe user data & caches (all methods):**
 
 ```bash
-rm -rf ~/.config/spartacus     # fan curves (curves.toml), daemon config
-rm -rf ~/.cache/spartacus      # extracted QDT theme assets
+rm -rf ~/.config/spartacus     # fan curves (curves.toml), themes, theme selection
 rm -f  ~/.config/Spartacus/ControlCenter.conf   # GUI window preferences
 sudo rm -rf /etc/spartacus     # system daemon config, if present
 ```
 
-**Verify nothing is left:**
-
-```bash
-which spartacus-daemon spartacus-control-center   # → nothing found
-ls /usr/share/spartacus /etc/spartacus 2>&1       # → No such file or directory
-systemctl --user status spartacus-daemon          # → could not be found
-lsusb | grep -i 3633                              # cooler itself still listed (that's the device, not us)
-```
-
-After removal the panel reverts to the DeepCool logo within ~15 s and the pump runs on
-the motherboard/firmware default curve — no daemon-side state remains on the device
-except brightness/orientation stored in panel NVM (change them once in Settings before
-uninstalling if you care).
+After removal the panel reverts to the DeepCool logo within ~15 s and the pump runs on the motherboard/firmware default curve — no daemon-side state remains on the device except brightness/orientation stored in panel NVM (change them once in Settings before uninstalling if you care).
 
 ---
 
@@ -192,20 +190,32 @@ uninstalling if you care).
 
 The window is a sidebar (pages) plus a top bar of status pills:
 
-| Indicator | Meaning |
-|---|---|
-| `● Connected` / `● Disconnected` | GUI ↔ daemon IPC link |
-| `Daemon Active` | daemon process reachable |
-| `Pipeline LIVE` / `STALE` | validated telemetry fresh (< 2 s) or not |
-| **SEND TO LCD** | global button — sends the current Studio design to the panel |
+Indicator
+
+Meaning
+
+`● Connected` / `● Disconnected`
+
+GUI ↔ daemon IPC link
+
+`Daemon Active`
+
+daemon process reachable
+
+`Pipeline LIVE` / `STALE`
+
+validated telemetry fresh (< 2 s) or not
 
 ### Overview
+
 Twelve metric cards (CPU temp/usage/frequency, GPU temp/usage, pump/AIO/EXT1/EXT2 RPM, RAM, network). Each card shows the value plus its quality and sample latency. Non-GOOD metrics show `--` with the reason.
 
 ### Cooling (manual mode)
+
 Four duty sliders with live percentage labels and profile presets (Silent / Balanced / Performance). Moving a slider sends manual duties to the daemon and **pauses the automatic curve loop** until you apply a curve on the Fans page.
 
 ### Fans (automatic mode)
+
 An interactive curve editor per channel:
 
 - **Drag** points to reshape the curve · **double-click** empty space adds a point · **right-click** a point removes it
@@ -214,194 +224,286 @@ An interactive curve editor per channel:
 - **Apply curve to daemon** stores it (`curves.toml`) and switches the channel to automatic control; **Reset** restores the default `(30°,30%) (50°,60%) (70°,100%)`
 
 ### Lighting
+
 Pick a mode (Off / Static / Rainbow / Breathing / Temperature-Reactive), tune speed & saturation, choose a color, **Apply lighting**. The Motherboard-sync checkbox hands fans *and* lighting to the motherboard (protocol-correct asymmetric channel table); unticking reclaims software control.
 
 ### Telemetry Diagnostics
+
 One row per metric: raw value vs validated value, quality, inter-sample latency, total samples, rejected samples, outlier triggers and the last rejection reason. **Export diagnostics JSON** dumps all of it plus the rejection log for bug reports.
 
 ### Settings
+
 LCD brightness (0–100) and orientation — both persist in panel NVM, so the daemon only writes when a value actually changes.
 
 ---
 
-## LCD Studio
+## Theme engine
 
-Opened from the sidebar. Layout: canvas center, layer panel + inspector right, toolbar top.
+The panel is rendered **by the daemon, natively, in Rust** — the same code path and drawing quality as the classic `cards` dashboard:
 
-**Toolbar**
+- Thick arcs are drawn as chains of filled circles (smooth, round-capped)
+- Ring gauges sweep clockwise from 12 o'clock; bars get rounded ends
+- Text is rasterized with fontdue (antialiased) from a bold system sans
+- The frame is re-rendered every `screen.refresh_ms` and pushed over USB, doubling as the keepalive against the panel's ~15 s logo watchdog
 
-| Control | What it does |
+### Built-in themes
+
+| Name | Look |
 |---|---|
-| Preset dropdown | Load one of six built-in templates (current design is pushed to undo) |
-| Zoom `25–200 %` | Canvas magnification (default 100 % = true size) |
-| Circular mask | Show/hide the round panel mask |
-| Grid / Snap | 16 px grid overlay; drag positions quantize to 8 px |
-| Group / Ungroup | `Ctrl+G` welds the selection into one movable unit; `Ctrl+Shift+U` releases it |
-| FPS + START LIVE | Live Mode streaming (see below) |
-| Realistic Preview | Render inside a pump-block frame, exactly what ships to the panel |
-| **SEND TO LCD** | Encode baseline JPEG → daemon → panel |
+| `cards` | dark purple gradient, white stat cards, progress bars, pump ring |
+| `cards-light` | lavender variant of cards |
+| `colorful`, `rings` | classic alternate layouts |
+| `neon` | dark navy, cyan/magenta/purple ring gauges |
+| `aurora` | deep teal, minimal stat rows, pump ring in the header |
+| `slate` | graphite cards with orange/blue accents |
 
-**Canvas interaction**
+Switch themes from **Theme Studio → APPLY TO DAEMON**, or over IPC:
 
-| Action | Input |
-|---|---|
-| Select | click (topmost element under cursor wins) |
-| Multi-select | `Shift`+click, or drag a rubber band on empty space |
-| Move | drag (multi-selection moves together) |
-| Nudge | arrow keys, 1 px steps |
-| Snap | 8 px grid (when Snap on) and cyan guides at the canvas center (240,240) and sibling centers |
-| Select all | `Ctrl+A` |
+```jsonc
+{"jsonrpc": "2.0", "method": "SetTheme", "params": {"name": "neon"}, "id": 1}
+```
 
-**Elements** (added with `+ Text` / `+ Ring`, duplicated with `Dup`, deleted with `Delete`, reordered with `Front`/`Back`):
+The selection is stored in `~/.config/spartacus/theme` and wins over `config.toml` on startup.
 
-| Element | Editable properties (Inspector) |
-|---|---|
-| Text | content (supports `{bindings}`), font family/size/bold, alignment, letter-spacing, rotation, opacity, color |
-| Ring gauge | binding key, min/max range, radius, thickness, start/end angle, track + active colors |
-| Image | path (PNG/JPEG/BMP), width/height, keep-aspect, fractional crop, rotation, opacity |
-| Shape | rectangle / rounded / circle / line / arc, stroke + fill colors, corner radius |
-| Background | linear/radial gradient or solid, optional image |
+### Theme spec format
 
-**Layer panel** lists layers top-first with hidden 🔒 state markers; selecting a row selects it on canvas and populates the Inspector. All edits are undoable — history is snapshot-based, capped at 100 steps, committed on drag-release, add/delete/duplicate/reorder/preset/import/group.
+A theme is a portable JSON document (`.json`) describing a 480×480 design. The daemon parses it (`screen/theme_spec.rs`) and renders it with the same primitives as the built-ins:
 
-**Saving:** `Save layout` writes a portable `.slayout.json`; `Load .qdt / layout` opens those or an LCD-Wiki theme.
+```jsonc
+{
+  "name": "my-theme",
+  "background": {"kind": "gradient", "top": "#0B0E1A", "bottom": "#101528"},
+  "widgets": [
+    {"kind": "panel", "x":14, "y":66, "w":222, "h":148, "r":14,
+     "fill":"#161B29", "stroke":"#232B40", "stroke_w":2},
+    {"kind": "text", "x":240, "y":42, "size":34, "color":"#FFFFFF",
+     "align":"center", "text":"{time}"},
+    {"kind": "ring", "cx":240, "cy":240, "r":120, "thickness":14,
+     "track":"#1E2438", "fill":"#00E5FF", "binding":"cpu_temp",
+     "min":0, "max":100, "start":-90, "sweep":360,
+     "center_text":"{cpu_temp:.0}°", "center_size":40},
+    {"kind": "bar", "x":30, "y":400, "w":200, "h":10,
+     "track":"#1E2438", "fill":"#7CFFB2", "binding":"cpu_usage", "min":0, "max":100},
+    {"kind": "rect", "x":0, "y":0, "w":480, "h":56, "fill":"#3A215E"},
+    {"kind": "circle", "cx":240, "cy":240, "r":50, "fill":"#101528"}
+  ]
+}
+```
 
----
+Widget kinds: `panel` (rounded card), `text`, `ring` (gauge), `bar` (progress), `rect`, `circle`.
 
-## Designing your first screen
+Text content supports `{binding}` and `{binding:.N}` placeholders resolved from live metrics; unknown bindings render as `--` — never fake zeros.
 
-A five-minute walkthrough — “big CPU temperature with a ring around it”:
+Custom themes are looked up in `~/.config/spartacus/themes/<name>.json`, then `/etc/spartacus/themes/`, then `/usr/share/spartacus/themes/`.
 
-1. Open **LCD Studio** and pick the **Minimal Cyber** preset as a starting point.
-2. Click the big `{cpu_temp}` text. In the Inspector set Font size `72`, Bold on, color `#00F0FF`. Drag it near the center — release when the cyan center guide appears.
-3. Click the ring. Set Binding `cpu_temp`, Min `20`, Max `95` (matching °C), Thickness `18`, track `#2A2E35`.
-4. Add your own label: `+ Text`, type `CPU LOAD {cpu_usage}%` in the Inspector’s Content field, size `20`, drag it below the ring.
-5. Press **Realistic Preview** — you see the exact panel output inside the pump block, with live values already substituted.
-6. Hit **SEND TO LCD**. The status line reports `LCD accepted frame (… B, sum16=0x…)`. Look at your pump cap — your design is on it.
-   The built-in dashboard stays out of the way for 20 s after each send; send again any time to renew.
-7. Want it permanent? **START LIVE** streams your design with continuously updating telemetry at the chosen FPS. Stop whenever; the dashboard resumes automatically afterwards.
-8. `Save layout` to keep the design as `mydesign.slayout.json`.
+### Bindings reference
 
-Tips:
-- Bind text like `CPU {cpu_temp:.0f}°C` — the part inside `{}` is the binding, the rest is literal decoration; format specs (`.0f`, `.1f`) work.
-- Rings render **track-only** if their binding isn’t GOOD right now — that’s intentional (no fake zero readings).
-- Lock complex groups you’ve positioned: select → `Ctrl+G`, they move as one and can’t be picked individually.
-- Use `Undo` liberally — even preset switches and imports are reversible.
-
----
-
-## Telemetry bindings reference
-
-Placeholders usable in any text element or ring binding. Only these keys are currently delivered by the daemon:
-
-| Binding key | Unit | Typical text template |
+| Binding | Unit | Notes |
 |---|---|---|
-| `{cpu_temp}` | °C | `CPU {cpu_temp}°C` |
-| `{gpu_temp}` | °C | `GPU {gpu_temp}` |
-| `{cpu_usage}` | % | `LOAD {cpu_usage}%` |
-| `{gpu_usage}` | % | `GPU {gpu_usage}%` |
-| `{cpu_freq_ghz}` | GHz | `{cpu_freq_ghz:.2f} GHz` |
-| `{pump_rpm}` | RPM | `{pump_rpm} RPM` |
-| `{aio_rpm}` | RPM | `FANS {aio_rpm}` |
-| `{ext1_rpm}` / `{ext2_rpm}` | RPM | `EXT1 {ext1_rpm}` |
-| `{ram_used_gb}` / `{ram_total_gb}` | GB | `RAM {ram_used_gb}/{ram_total_gb} GB` |
-| `{net_down_kbps}` / `{net_up_kbps}` | kB/s | `↓{net_down_kbps} ↑{net_up_kbps}` |
-
-Rules:
-- A placeholder resolves to the **validated** value; anything not GOOD renders as `--` (`CPU --°C`).
-- Format specs follow Python format syntax: `{cpu_temp:.1f}`, `{pump_rpm:5d}` …
-- Ring gauges map `(value − min) / (max − min)` onto the arc angle; invalid data ⇒ track-only arc.
-- The pipeline knows more keys (`liquid_temp`, `gpu_vram_gb`, `disk_*`, …) — bindings for them simply show `--` until the daemon provides them.
+| `time`, `date` | — | wall clock |
+| `cpu_temp`, `gpu_temp` | °C | |
+| `cpu_usage`, `gpu_usage` | % | |
+| `cpu_freq` | GHz | |
+| `ram_used`, `ram_free`, `ram_total` | GB | |
+| `ram_pct` | % | |
+| `disk_used`, `disk_free`, `disk_total` | GB | |
+| `disk_pct` | % | |
+| `net_up`, `net_down` | kB/s | |
+| `pump_rpm`, `fan_rpm` | RPM | fan_rpm = AIO channel |
+| `pump_pct` | % | pump duty approximation |
 
 ---
 
-## Importing LCD-Wiki `.qdt` themes
+## Theme Studio
 
-lcdwiki.com distributes cooler-screen themes as `.qdt` packages (round screens are named
-`480X480-1.qdt` … `480X480-7.qdt`). **Load .qdt / layout** in the Studio imports them:
+Opened from the sidebar ("LCD Studio" entry). Design themes with the same primitives the daemon draws — the preview is a pixel-accurate mirror of the panel output, fed with live telemetry.
 
-1. The container is sniffed and unpacked — ZIP, gzip-wrapped, bare descriptor text, or
-   opaque binaries where images are recovered by magic-byte carving (PNG/JPEG/BMP).
-2. Layout descriptors (JSON / XML / INI variants) are parsed into normalized widgets.
-3. Variables (`CPU_Temp`, `fanSpeed1`, `GPU_Load`, …) are mapped onto canonical bindings
-   via alias tables + regex fallbacks; anything unmapped is reported so you can bind it
-   manually.
-4. Widgets convert into native editable layers — rings, bound text, images, placeholder
-   shapes for unknown constructs. Images land in `~/.cache/spartacus/qdt/`.
-5. A summary dialog lists every lossy/ambiguous conversion note. Edit freely, then send
-   or save like any other design.
+- **Presets**: cards, cards-light, neon, aurora, slate — load one and edit
+- **Widget palette**: `+ Panel / Text / Ring / Bar / Rect / Circle`
+- **Canvas**: click to select, drag to move, dashed outline = selection; live values refresh every second
+- **Inspector**: per-widget geometry, colors, alignment, binding, min/max, ring start/sweep, center text
+- **Layer list** with reorder (Up/Down), duplicate, delete; undo/redo (`Ctrl+Z` / `Ctrl+Y`)
+- **Save JSON** / **Open JSON** / **Export PNG**
+- **APPLY TO DAEMON** — saves to `~/.config/spartacus/themes/<name>.json` and switches the daemon to it via IPC. The design renders natively and permanently; no streaming, no GUI round-trip.
 
-No formal `.qdt` spec exists publicly; the reader is deliberately evidence-based and never
-crashes on unknown content — worst case you get a placeholder plus a note.
-
----
-
-## Live Mode (stream to the panel)
-
-Choose 15 / 30 / 60 FPS, press **START LIVE**:
-
-- Rendering + JPEG encoding + USB transfer happen on a worker pool — the GUI never blocks
-- Only one frame is in flight; late ticks are *dropped* (counted), never queued, keeping latency bounded at the chosen FPS
-- Every frame renews the daemon’s **LCD takeover window** (20 s), suspending the built-in dashboard while you stream; when you stop, the dashboard resumes automatically
-- If nothing validated is available to draw, a lightweight keepalive refreshes the panel instead of shipping a stale frame
-
-The status label reports `live: N sent · M dropped` in real time.
+> The legacy slayout editor, QDT import and LCD live-streaming were removed: native daemon rendering replaced them (better quality, zero CPU on the GUI side).
 
 ---
 
 ## Telemetry quality system
 
-Every metric passes one pipeline before any consumer (cards, sparkline history, LCD
-bindings, Live frames) sees it:
+Every metric passes one pipeline before any consumer (cards, theme bindings, LCD widgets) sees it:
 
-| State | Meaning | Rendered as |
-|---|---|---|
-| `GOOD` | fresh sample inside physical bounds | value |
-| `STALE` | no accepted update > 1000 ms (1500 ms for RPM/net) | `--` + age |
-| `INVALID` | NaN/∞, out-of-bounds, negative RPM, absurd net rate | `--` + reason |
-| `OUTLIER` | sliding-median rejected spike (45→95→46 °C) | `--`; excluded from history |
-| `UNAVAILABLE` | sensor absent from the snapshot | `--` |
+State
+
+Meaning
+
+Rendered as
+
+`GOOD`
+
+fresh sample inside physical bounds
+
+value
+
+`STALE`
+
+no accepted update > 1000 ms (1500 ms for RPM/net)
+
+`--` + age
+
+`INVALID`
+
+NaN/∞, out-of-bounds, negative RPM, absurd net rate
+
+`--` + reason
+
+`OUTLIER`
+
+sliding-median rejected spike (45→95→46 °C)
+
+`--`; excluded from history
+
+`UNAVAILABLE`
+
+sensor absent from the snapshot
+
+`--`
 
 Design rules enforced everywhere:
+
 - CPU usage comes from `/proc/stat` deltas, network rates from byte-counter deltas with rollover protection
-- The outlier filter is a **median**, not an EMA: genuine fast ramps pass untouched, single-frame glitches don’t
+- The outlier filter is a **median**, not an EMA: genuine fast ramps pass untouched, single-frame glitches don't
 - Sustained new levels are adopted after repeated confirmation — the filter re-centers instead of latching
-- Nothing ever falls back to “last good” silently or renders `0` for missing data
+- Nothing ever falls back to "last good" silently or renders `0` for missing data
 
 ---
 
 ## Files & formats
 
-| Path | Purpose |
-|---|---|
-| `$XDG_RUNTIME_DIR/spartacus.sock` | IPC socket (daemon ↔ GUI) |
-| `~/.config/spartacus/curves.toml` | persisted fan curves (pump + 6 fan channels) |
-| `~/.config/spartacus/config.toml` | optional daemon config (theme, refresh interval) |
-| `~/.cache/spartacus/qdt/<hash>/` | assets extracted from imported QDT themes |
-| `*.slayout.json` | portable LCD Studio designs (layout model v2) |
+Path
+
+Purpose
+
+`$XDG_RUNTIME_DIR/spartacus.sock`
+
+IPC socket (daemon ↔ GUI)
+
+`~/.config/spartacus/curves.toml`
+
+persisted fan curves (pump + 6 fan channels)
+
+`~/.config/spartacus/config.toml`
+
+optional daemon config (refresh interval, …)
+
+`~/.config/spartacus/theme`
+
+last theme chosen at runtime (wins on startup)
+
+`~/.config/spartacus/themes/*.json`
+
+your Theme Studio designs
+
+`*.png`
+
+Theme Studio exports
 
 ---
 
 ## IPC API reference
 
-JSON-RPC 2.0, newline-delimited, over the UNIX socket. The GUI’s `core/ipc/client.py`
-wraps all of this; anything that can speak JSON-RPC can too.
+JSON-RPC 2.0, newline-delimited, over the UNIX socket. The GUI's `core/ipc/client.py` wraps all of this; anything that can speak JSON-RPC can too.
 
-| Method | Params | Result |
-|---|---|---|
-| `GetStatus` | `{}` | usb_connected, temps, RPMs, usage, ram/disk/net, `fan_control_auto` |
-| `GetTelemetry` | `{}` | full flat snapshot keyed by canonical binding keys |
-| `GetDiagnostics` | `{}` | daemon health summary |
-| `SendLcdFrame` | `{jpeg_b64}` | `{accepted:true}` — baseline JPEG gate + 20 s takeover |
-| `LcdKeepalive` | `{}` | refresh retained frame without re-send |
-| `LcdSetConfig` | `{orientation?, brightness?}` | applied values (no-op writes skipped, NVM) |
-| `SetPumpSpeed` | `{speed}` | clamped ≥ 40 %, switches to manual |
-| `SetFanSpeed` | `{fan, speed}` | channel 0–3, switches to manual |
-| `SetFans` | `{pump,aio,ext1,ext2,ramp?}` | all four duties, switches to manual |
-| `SetFanCurve` | `{channel, points:[{t,pwm}]}` | sorted/validated points stored + persisted, resumes auto |
-| `SetLighting` | `{mode,color?,speed?,saturation?}` | effect update |
-| `SetMotherboardSync` | `{enable}` | asymmetric motherboard hand-over |
-| `GetConfig` / `SetConfig` | `{}` / config | daemon settings |
+Method
+
+Params
+
+Result
+
+`GetStatus`
+
+`{}`
+
+usb\_connected, temps, RPMs, usage, ram/disk/net, `fan_control_auto`
+
+`GetTelemetry`
+
+`{}`
+
+full flat snapshot keyed by canonical binding keys
+
+`GetDiagnostics`
+
+`{}`
+
+daemon health summary
+
+`SetTheme`
+
+`{name}`
+
+switches the panel theme (builtin or `~/.config/spartacus/themes/<name>.json`), persists it
+
+`SendLcdFrame`
+
+`{jpeg_b64}`
+
+legacy: push one raw frame (baseline JPEG gate + 20 s takeover)
+
+`LcdKeepalive`
+
+`{}`
+
+legacy: refresh retained frame without re-send
+
+`LcdSetConfig`
+
+`{orientation?, brightness?}`
+
+applied values (no-op writes skipped, NVM)
+
+`SetPumpSpeed`
+
+`{speed}`
+
+clamped ≥ 40 %, switches to manual
+
+`SetFanSpeed`
+
+`{fan, speed}`
+
+channel 0–3, switches to manual
+
+`SetFans`
+
+`{pump,aio,ext1,ext2,ramp?}`
+
+all four duties, switches to manual
+
+`SetFanCurve`
+
+`{channel, points:[{t,pwm}]}`
+
+sorted/validated points stored + persisted, resumes auto
+
+`SetLighting`
+
+`{mode,color?,speed?,saturation?}`
+
+effect update
+
+`SetMotherboardSync`
+
+`{enable}`
+
+asymmetric motherboard hand-over
+
+`GetConfig` / `SetConfig`
+
+`{}` / config
+
+daemon settings
 
 Errors are standard JSON-RPC errors (`-32602` invalid params, `-32000` hardware error message).
 
@@ -416,6 +518,10 @@ Errors are standard JSON-RPC errors (`-32602` invalid params, `-32000` hardware 
 │ usb/monitor.rs    reconnects, polls, theme stream, commands │
 │ telemetry/        /proc/stat deltas, sysfs sensors          │
 │ cooling/          curve evaluation + pump-floor enforcement │
+│ screen/           Canvas primitives (stamped arcs, gauges)  │
+│   themes*.rs      built-in Rust themes (cards, …)           │
+│   theme_spec.rs   data-driven JSON theme renderer           │
+│   themes/*.json   neon · aurora · slate (+ cards specs)     │
 │ ipc/server.rs     JSON-RPC ⇄ command channel ⇄ monitor task │
 └──────────────────────────┬──────────────────────────────────┘
                            │ UNIX socket
@@ -423,23 +529,21 @@ Errors are standard JSON-RPC errors (`-32602` invalid params, `-32000` hardware 
 │ src/gui (PyQt6)                                             │
 │  core/ipc       async client + TelemetryWorker thread       │
 │  core/telemetry ★ validation pipeline → TelemetryModel      │
-│  core/lcd       layout model · renderer · exporter · live   │
-│                 scene · undo · qdt importer · templates     │
-│  ui/pages       Overview Cooling Fans Lighting Studio       │
+│  core/theme     theme spec model + preview renderer         │
+│  ui/pages       Overview Cooling Fans Lighting ThemeStudio  │
 │                 Diagnostics Settings                        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-Deep-dive design document: [`docs/UPGRADE_PLAN.md`](docs/UPGRADE_PLAN.md).
+Deep-dive design document: [`docs/UPGRADE_PLAN.md`](/nerdjb/spartacus-control-center/blob/master/docs/UPGRADE_PLAN.md).
 
 ## Protocol summary
 
-Reverse-engineered; the authoritative wire specification lives at
-[gnumbix/deepcool-spartacus-cpp-lib](https://github.com/gnumbix/deepcool-spartacus-cpp-lib).
+Reverse-engineered; the authoritative wire specification lives at [gnumbix/deepcool-spartacus-cpp-lib](https://github.com/gnumbix/deepcool-spartacus-cpp-lib).
 
 - **Display control** (bulk EP `0x04`, 46 B): signature `AA 2E`, cmd byte, params, `sum16` LE trailer. Cmds: `0x05` session, `0x04` orientation+brightness (NVM), `0x01` native temp/usage.
 - **Image stream** (bulk EP `0x02`): 480×480 **baseline JPEG** only, framed `Start` / `trans`×N / `DCLdfinish`, exactly 512-byte packets, no ACKs.
-- **Logo watchdog:** panel reverts to its logo after ~15 s without data; keepalives refresh the retained frame cheaply.
+- **Logo watchdog:** panel reverts to its logo after ~15 s without data; the theme stream refreshes every `refresh_ms`, acting as the keepalive.
 - **Linker report** (HID, 64 B, id `0x10`): complete stateless state per transfer, `sum8([1:37])`, marker `0x16`, big-endian tachometers at `[29:37]`. Passive polls use a neutralized report (motherboard sources; EXT2 stays software).
 
 ## Safety invariants
@@ -449,7 +553,7 @@ Reverse-engineered; the authoritative wire specification lives at
 3. Brightness clamped `[0,100]`; orientation `0..3` upright=`0x01`; NVM writes skipped when unchanged
 4. Full 64-byte Linker report resent on every change with recomputed checksums
 5. Connecting never takes over fans/lighting — monitoring stays passive until asked
-6. LCD frames must pass the JPEG skeleton gate before touching USB; GUI content holds a 20 s takeover window, then the dashboard returns
+6. Invalid telemetry never reaches the panel: theme bindings render `--` / neutral tracks
 
 ## Building from source
 
@@ -460,33 +564,66 @@ cd src/daemon && cargo build --release     # daemon binary
 cd src/gui && python3 main.py              # GUI from source tree
 ```
 
-> 💡 On unreliable/removable storage build out-of-tree:
-> `CARGO_TARGET_DIR=/tmp/spartacus-target cargo build --release`
+> 💡 On unreliable/removable storage build out-of-tree: `CARGO_TARGET_DIR=/tmp/spartacus-target cargo build --release`
+
+Offline theme preview without hardware:
+
+```bash
+cd src/daemon
+./target/release/spartacus-daemon --render-theme cards out.raw        # built-in
+./target/release/spartacus-daemon --render-spec my-theme.json out.raw # spec file
+python3 -c "from PIL import Image; Image.frombytes('RGB',(480,480),open('out.raw','rb').read()).save('out.png')"
+```
 
 ## Tests
 
 ```bash
-python3 -m unittest discover -s tests          # 67 tests: pipeline, QDT, undo,
-                                               # curves, renderer, IPC round-trip,
-                                               # full-stack GUI vs mock daemon
-cd src/daemon && cargo test                    # 13 tests: golden vectors,
+python3 -m unittest discover -s tests          # 48 tests: pipeline, theme specs,
+                                               # preview renderer, curves, IPC
+                                               # round-trip, full-stack GUI vs mock
+cd src/daemon && cargo test                    # 16 tests: golden vectors,
                                                # curve parser, override gate
 ```
 
-The full-stack suite launches the real Qt app against a mock daemon over a real UNIX
-socket — no hardware needed.
+The full-stack suite launches the real Qt app against a mock daemon over a real UNIX socket — no hardware needed.
 
 ## Troubleshooting
 
-| Symptom | Fix |
-|---|---|
-| GUI shows `● Disconnected` | daemon not running: start it first; check socket exists |
-| `DeviceNotFoundError` / connect fails | official DeepCool software running? udev rule installed? replug after installing rule |
-| Panel shows DeepCool logo | nothing sent within ~15 s — press SEND TO LCD again or enable Live Mode |
-| All values `-- ● STALE` | telemetry collector lost sensors; check `SPARTACUS_LOG=debug` daemon output |
-| Slider changes revert | automatic curve loop owns duties — apply a curve to resume auto, curves then follow temperature |
-| Ring/text shows `--` on panel but works in preview | binding not GOOD at render time — see Diagnostics page for the reason |
-| Import dialog lists notes | expected: QDT import reports every ambiguous conversion instead of guessing silently |
+Symptom
+
+Fix
+
+GUI shows `● Disconnected`
+
+daemon not running: start it first; check socket exists
+
+`DeviceNotFoundError` / connect fails
+
+official DeepCool software running? udev rule installed? replug after installing rule
+
+Panel shows DeepCool logo
+
+nothing sent within ~15 s — the daemon theme stream should keep it alive; check daemon logs
+
+Panel shows magenta blocks
+
+a color in your theme spec failed to parse (`#RRGGBB` expected)
+
+Theme didn't switch
+
+name must match a builtin or a file in `~/.config/spartacus/themes/<name>.json`; check daemon log for `Theme set to …`
+
+Theme didn't survive reboot
+
+`~/.config/spartacus/theme` must contain the name; `/etc/spartacus/config.toml` screen.theme is overridden by it
+
+All values `-- ● STALE`
+
+telemetry collector lost sensors; check `SPARTACUS_LOG=debug` daemon output
+
+Slider changes revert
+
+automatic curve loop owns duties — apply a curve to resume auto, curves then follow temperature
 
 ## License
 

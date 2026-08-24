@@ -2,30 +2,24 @@
 
 from __future__ import annotations
 
+import re
 from copy import deepcopy
+from datetime import datetime
 from pathlib import Path
 
 from PyQt6.QtCore import Qt, QTimer, pyqtSignal
-from PyQt6.QtGui import QColor, QKeySequence, QShortcut
+from PyQt6.QtGui import QColor, QKeySequence, QShortcut, QImage
 from PyQt6.QtWidgets import (
     QCheckBox, QComboBox, QDoubleSpinBox, QFileDialog, QFormLayout, QFrame,
     QGridLayout, QHBoxLayout, QLabel, QLineEdit, QListWidget, QListWidgetItem,
-    QMessageBox, QPushButton, QSlider, QSpinBox, QStackedWidget, QTableWidget,
-    QTableWidgetItem, QVBoxLayout, QWidget,
+    QMessageBox, QPushButton, QScrollArea, QSlider, QSpinBox, QStackedWidget,
+    QTableWidget, QTableWidgetItem, QVBoxLayout, QWidget,
 )
 
 from core.hardware.curves import apply_pump_floor, default_curve, sanitize_points
 from core.ipc.client import DaemonClient, TelemetryWorker
-from core.lcd.exporter import LcdExporter
-from core.lcd.live import LiveModeController
-from core.lcd.model import ImageElement, LcdLayout, RingElement, ShapeElement, TextElement
-from core.lcd.qdt.container import extract
-from core.lcd.qdt.conversion import qdt_to_layout
-from core.lcd.qdt.parser import QdtParser
-from core.lcd.renderer import LcdRenderer
-from core.lcd.scene import LcdCanvas
-from core.lcd.templates import get_all
-from core.lcd.undo import UndoStack
+from core.theme.preview import SpecRenderer, widget_at
+from core.theme.spec import BINDINGS, WIDGET_KINDS, ThemeSpec, Widget, builtin_specs
 from core.telemetry.diagnostics import collect_rows
 from core.telemetry.model import TelemetryModel
 from core.telemetry.pipeline import TelemetryPipeline
@@ -298,427 +292,558 @@ class LightingPage(QWidget):
 # --------------------------------------------------------------------------- LCD Studio
 
 
-class LcdStudioPage(QWidget):
-    ZOOMS = ["25%", "50%", "75%", "100%", "150%", "200%"]
-    FPS_OPTIONS = [15, 30, 60]
+class ThemeStudioPage(QWidget):
+    """Design 480x480 panel themes with the same primitives the daemon's Rust
+    renderer draws natively — what you design is exactly what ships."""
 
     def __init__(self, client: DaemonClient, model: TelemetryModel, parent=None):
         super().__init__(parent)
         self.client, self.model = client, model
-        self.layout_model = next(iter(get_all().values()))
-        self.undo_stack = UndoStack()
-        self.canvas = LcdCanvas(self.layout_model, model.pipeline, self)
-        self.live = LiveModeController(client, self.layout_model, model.pipeline, self)
+        self.spec = ThemeSpec(name="my-theme")
+        self.selected = -1
+        self.undo_stack: list[dict] = []
+        self.redo_stack: list[dict] = []
+        self._drag_offset = (0.0, 0.0)
+        self._dragging = False
         self._build_ui()
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.refresh_live)
+        self.timer.start(1000)
 
         shortcuts = {
             "Ctrl+Z": self.undo, "Ctrl+Y": self.redo, "Ctrl+Shift+Z": self.redo,
-            "Ctrl+A": self.canvas.select_all,
+            "Delete": self.delete_widget,
         }
         for sequence, handler in shortcuts.items():
-            shortcut = QShortcut(QKeySequence(sequence), self)
-            shortcut.activated.connect(handler)
+            QShortcut(QKeySequence(sequence), self).activated.connect(handler)
 
-        self.canvas.edit_committed.connect(self.undo_stack.push)
-        self.canvas.selection_changed.connect(self.on_selection_changed)
-        self.refresh_layers()
-        self.build_inspector([])
+        self.load_preset("slate")
 
     # -- UI construction ------------------------------------------------------
 
     def _build_ui(self):
         root = QVBoxLayout(self)
         toolbar = QHBoxLayout()
-        brand = QLabel("LCD STUDIO")
+        brand = QLabel("THEME STUDIO")
         brand.setObjectName("CardTitle")
         toolbar.addWidget(brand)
         self.preset_combo = QComboBox()
-        self.preset_combo.addItems([name.replace("_", " ").title() for name in get_all()])
+        self.preset_combo.addItems(list(builtin_specs()))
         self.preset_combo.currentTextChanged.connect(self.load_preset)
         toolbar.addWidget(self.preset_combo)
-        self.zoom_combo = QComboBox()
-        self.zoom_combo.addItems(self.ZOOMS)
-        self.zoom_combo.setCurrentText("100%")
-        self.zoom_combo.currentTextChanged.connect(self.set_zoom)
-        toolbar.addWidget(self.zoom_combo)
-        self.mask_check = QCheckBox("Circular mask")
-        self.mask_check.setChecked(True)
-        self.mask_check.toggled.connect(self.toggle_mask)
-        self.grid_check = QCheckBox("Grid")
-        self.grid_check.toggled.connect(self.toggle_grid)
-        self.snap_check = QCheckBox("Snap")
-        self.snap_check.toggled.connect(lambda value: setattr(self.canvas, "snap_grid", value))
-        group_button = QPushButton("Group")
-        group_button.clicked.connect(self.commit_then(self.canvas.group_selection))
-        ungroup_button = QPushButton("Ungroup")
-        ungroup_button.clicked.connect(self.commit_then(self.canvas.ungroup_selection))
-        for widget in (self.mask_check, self.grid_check, self.snap_check,
-                       group_button, ungroup_button):
+        open_button = QPushButton("Open JSON")
+        open_button.clicked.connect(self.open_json)
+        save_button = QPushButton("Save JSON")
+        save_button.clicked.connect(self.save_json)
+        png_button = QPushButton("Export PNG")
+        png_button.clicked.connect(self.export_png)
+        apply_button = QPushButton("APPLY TO DAEMON")
+        apply_button.setProperty("accent", "primary")
+        apply_button.clicked.connect(self.apply_to_daemon)
+        for widget in (open_button, save_button, png_button, apply_button):
             toolbar.addWidget(widget)
         toolbar.addStretch()
-        self.fps_combo = QComboBox()
-        self.fps_combo.addItems([f"{fps} FPS" for fps in self.FPS_OPTIONS])
-        self.fps_combo.setCurrentText("30 FPS")
-        self.fps_combo.currentTextChanged.connect(self.change_fps)
-        self.live_button = QPushButton("START LIVE")
-        self.live_button.clicked.connect(self.toggle_live)
-        self.live_stats = QLabel("live: idle")
-        toolbar.addWidget(self.fps_combo)
-        toolbar.addWidget(self.live_button)
-        toolbar.addWidget(self.live_stats)
-        preview_button = QPushButton("Realistic Preview")
-        preview_button.clicked.connect(self.realistic_preview)
-        send_button = QPushButton("SEND TO LCD")
-        send_button.setProperty("accent", "primary")
-        send_button.clicked.connect(self.send_to_lcd)
-        toolbar.addWidget(preview_button)
-        toolbar.addWidget(send_button)
         root.addLayout(toolbar)
 
         body = QHBoxLayout()
-        body.addWidget(self.canvas, 1)
+        left = QVBoxLayout()
 
-        panel = QVBoxLayout()
-        panel.addWidget(QLabel("Layers"))
-        self.layer_list = QListWidget()
-        self.layer_list.currentRowChanged.connect(self.on_layer_row)
-        panel.addWidget(self.layer_list, 1)
+        add_row = QHBoxLayout()
+        for kind in WIDGET_KINDS:
+            button = QPushButton(f"+ {kind.title()}")
+            button.clicked.connect(lambda _, k=kind: self.add_widget(k))
+            add_row.addWidget(button)
+        left.addLayout(add_row)
 
-        layer_buttons = QGridLayout()
-        actions = [
-            ("+ Text", self.push_undo_and(self.add_text)),
-            ("+ Ring", self.push_undo_and(self.add_ring)),
-            ("Delete", self.push_undo_and(self.delete_selected)),
-            ("Dup", self.push_undo_and(self.duplicate_selected)),
-            ("Front", lambda: self.reorder_selected("front")),
-            ("Back", lambda: self.reorder_selected("back")),
-        ]
-        for index, (label, handler) in enumerate(actions):
+        edit_row = QHBoxLayout()
+        for label, handler in (("Dup", self.duplicate_widget), ("Del", self.delete_widget),
+                               ("Up", lambda: self.move_widget(-1)),
+                               ("Down", lambda: self.move_widget(1))):
             button = QPushButton(label)
             button.clicked.connect(handler)
-            layer_buttons.addWidget(button, index // 3, index % 3)
-        panel.addLayout(layer_buttons)
+            edit_row.addWidget(button)
+        left.addLayout(edit_row)
 
-        inspector_title = QLabel("Inspector")
-        inspector_title.setObjectName("CardTitle")
-        panel.addWidget(inspector_title)
-        self.inspector_form = QFormLayout()
-        self.inspector_form.setVerticalSpacing(4)
-        panel.addLayout(self.inspector_form)
-        save_button = QPushButton("Save layout")
-        save_button.clicked.connect(self.save_layout)
-        load_button = QPushButton("Load .qdt / layout")
-        load_button.clicked.connect(self.load_layout)
-        panel.addWidget(save_button)
-        panel.addWidget(load_button)
-        self.status = QLabel("Editor mode · 480×480 · Ctrl+Z/Y undo/redo")
+        self.widget_list = QListWidget()
+        self.widget_list.currentRowChanged.connect(self.on_list_select)
+        left.addWidget(self.widget_list, 1)
+
+        undo_row = QHBoxLayout()
+        undo_button = QPushButton("Undo")
+        undo_button.clicked.connect(self.undo)
+        redo_button = QPushButton("Redo")
+        redo_button.clicked.connect(self.redo)
+        undo_row.addWidget(undo_button)
+        undo_row.addWidget(redo_button)
+        undo_row.addStretch()
+        left.addLayout(undo_row)
+
+        left_panel = QWidget()
+        left_panel.setLayout(left)
+        left_panel.setFixedWidth(250)
+
+        self.canvas = ThemeCanvas(self)
+        self.canvas.setFixedSize(484, 484)
+        self.canvas.widget_selected.connect(self.on_canvas_select)
+        self.canvas.widget_moved.connect(self.on_canvas_moved)
+        self.canvas.edit_committed.connect(self.push_undo)
+        self.status = QLabel("Pick a preset, edit, then APPLY TO DAEMON — "
+                             "the daemon renders it natively at cards quality.")
         self.status.setWordWrap(True)
-        panel.addWidget(self.status)
-        body.addLayout(panel)
-        root.addLayout(body)
 
-    # -- helpers ------------------------------------------------------------
+        center = QVBoxLayout()
+        center.addWidget(self.canvas, 0, Qt.AlignmentFlag.AlignCenter)
+        center.addWidget(self.status)
+        center_widget = QWidget()
+        center_widget.setLayout(center)
 
-    def push_undo_and(self, handler):
-        def wrapped():
-            self.undo_stack.push(deepcopy(self.layout_model.to_dict()))
-            handler()
-        return wrapped
+        self.inspector = QFormLayout()
+        right_panel = QWidget()
+        right_scroll = QScrollArea()
+        right_scroll.setWidgetResizable(True)
+        inner = QWidget()
+        inner.setLayout(self.inspector)
+        right_scroll.setWidget(inner)
+        right_scroll.setMinimumWidth(280)
+        right_layout = QVBoxLayout(right_panel)
+        right_layout.addWidget(right_scroll)
 
-    def commit_then(self, handler):
-        def wrapped():
-            snapshot = deepcopy(self.layout_model.to_dict())
-            handler()
-            self.undo_stack.push(snapshot)
-            self.refresh_layers()
-        return wrapped
+        body.addWidget(left_panel)
+        body.addWidget(center_widget, 1)
+        body.addWidget(right_panel)
+        root.addLayout(body, 1)
 
-    def undo(self):
-        restored = self.undo_stack.undo(deepcopy(self.layout_model.to_dict()))
-        if restored:
-            self.layout_model = LcdLayout.from_dict(restored)
-            self.canvas.layout = self.layout_model
-            self.live.layout = self.layout_model
-            self.canvas.clear_selection()
-            self.canvas.refresh()
-            self.refresh_layers()
+    # -- state helpers ----------------------------------------------------------
 
-    def redo(self):
-        restored = self.undo_stack.redo(deepcopy(self.layout_model.to_dict()))
-        if restored:
-            self.layout_model = LcdLayout.from_dict(restored)
-            self.canvas.layout = self.layout_model
-            self.live.layout = self.layout_model
-            self.canvas.clear_selection()
-            self.canvas.refresh()
-            self.refresh_layers()
+    def push_undo(self) -> None:
+        self.undo_stack.append(deepcopy(self.spec.to_dict()))
+        self.undo_stack = self.undo_stack[-100:]
+        self.redo_stack.clear()
 
-    # -- canvas interactions ---------------------------------------------------
-
-    def set_zoom(self, text):
-        factor = int(text[:-1]) / 100
-        self.canvas.resetTransform()
-        self.canvas.scale(factor, factor)
-
-    def toggle_mask(self, value):
-        self.canvas.mask_enabled = value
-        self.canvas.refresh()
-
-    def toggle_grid(self, value):
-        self.canvas.show_grid = value
-        self.canvas.refresh()
-
-    def refresh_layers(self):
-        self.layer_list.blockSignals(True)
-        self.layer_list.clear()
-        for element in reversed(self.layout_model.elements):   # top layer first
-            state = "" if element.visible else "  (hidden)"
-            lock = " 🔒" if getattr(element, "locked", False) else ""
-            item = QListWidgetItem(f"{element.name} [{element.element_type.value}]{state}{lock}")
-            item.setData(Qt.ItemDataRole.UserRole, element.id)
-            self.layer_list.addItem(item)
-        self.layer_list.blockSignals(False)
-
-    def on_layer_row(self, row):
-        if row < 0:
+    def undo(self) -> None:
+        if not self.undo_stack:
             return
-        element = list(reversed(self.layout_model.elements))[row]
-        self.canvas.set_selection([element.id])
+        self.redo_stack.append(deepcopy(self.spec.to_dict()))
+        self.spec = ThemeSpec.from_dict(self.undo_stack.pop())
+        self.selected = -1
+        self.refresh_all()
 
-    def on_selection_changed(self, ids: list):
-        self.undo_stack_for_selection = deepcopy(self.layout_model.to_dict())
-        self.build_inspector(ids)
-        self.refresh_layers()
-
-    def selected_element(self):
-        ids = self.canvas.selection
-        return self.layout_model.get(ids[0]) if len(ids) == 1 else None
-
-    # -- inspector ---------------------------------------------------------------
-
-    def build_inspector(self, ids: list):
-        while self.inspector_form.rowCount():
-            self.inspector_form.removeRow(0)
-        if len(ids) > 1:
-            label = QLabel(f"{len(ids)} elements selected")
-            self.inspector_form.addRow(label)
+    def redo(self) -> None:
+        if not self.redo_stack:
             return
-        element = self.selected_element()
-        if element is None:
-            self.inspector_form.addRow(QLabel("No selection"))
+        self.undo_stack.append(deepcopy(self.spec.to_dict()))
+        self.spec = ThemeSpec.from_dict(self.redo_stack.pop())
+        self.selected = -1
+        self.refresh_all()
+
+    def live_metrics(self) -> dict:
+        metrics: dict = {}
+        try:
+            latest = self.model.pipeline.latest()
+        except Exception:
+            latest = {}
+        key_map = {"cpu_freq": "cpu_freq_ghz", "ram_used": "ram_used_gb",
+                   "ram_total": "ram_total_gb", "net_up": "net_up_kbps",
+                   "net_down": "net_down_kbps", "fan_rpm": "aio_rpm",
+                   "pump_rpm": "pump_rpm"}
+        for binding, source in key_map.items():
+            validated = latest.get(source)
+            if validated is not None and getattr(validated, "quality", None) is not None:
+                if str(validated.quality.value) == "GOOD":
+                    metrics[binding] = validated.value
+        if "pump_rpm" in metrics:
+            metrics["pump_pct"] = min(metrics["pump_rpm"], 3500) / 3500.0 * 100.0
+        if "ram_used" in metrics and metrics.get("ram_total"):
+            metrics["ram_pct"] = metrics["ram_used"] / metrics["ram_total"] * 100.0
+        now = datetime.now()
+        metrics["time"] = now.strftime("%H:%M:%S")
+        metrics["date"] = now.strftime("%Y-%m-%d")
+        return metrics
+
+    # -- actions -----------------------------------------------------------------
+
+    def load_preset(self, name: str) -> None:
+        specs = builtin_specs()
+        if name not in specs:
             return
+        self.push_undo()
+        self.spec = deepcopy(specs[name])
+        self.spec.name = name
+        self.selected = -1
+        self.refresh_all()
+        self.status.setText(f"Preset '{name}' loaded — edit freely.")
 
-        def spin(attr, low, high, step=1, is_float=False):
-            if is_float:
-                box = QDoubleSpinBox()
-                box.setDecimals(1)
-                box.setSingleStep(0.5)
-            else:
-                box = QSpinBox()
-            box.setRange(low, high)
-            raw = float(getattr(element, attr))
-            try:
-                box.setValue(raw)
-            except TypeError:
-                box.setValue(int(round(raw)))
-            box.valueChanged.connect(lambda v, a=attr: self.apply_property(a, v))
-            return box
-
-        form = self.inspector_form
-        name_box = QLineEditSafe(str(element.name))
-        name_box.editingFinished.connect(
-            lambda: self.apply_property("name", name_box.text()))
-        form.addRow("Name", name_box)
-        form.addRow("X", spin("x", -40, 520, is_float=True))
-        form.addRow("Y", spin("y", -40, 520, is_float=True))
-        form.addRow("Rotation°", spin("rotation_deg", -180, 180, is_float=True))
-        form.addRow("Opacity", spin("opacity", 0.0, 1.0, is_float=True))
-
-        if isinstance(element, TextElement):
-            text_box = QLineEditSafe(element.text)
-            text_box.editingFinished.connect(
-                lambda: self.apply_property("text", text_box.text()))
-            form.addRow("Content", text_box)
-            form.addRow("Font size", spin("font_size", 4, 200))
-            bold = QCheckBox()
-            bold.setChecked(element.bold)
-            bold.toggled.connect(lambda v: self.apply_property("bold", bool(v)))
-            form.addRow("Bold", bold)
-            hint = QLabel("Bindings: {" + "} {".join(BINDABLE_KEYS[:5]) + "} …")
-            hint.setWordWrap(True)
-            form.addRow(hint)
-        elif isinstance(element, RingElement):
-            binding = QComboBox()
-            binding.addItem("")     # static track only
-            binding.addItems(BINDABLE_KEYS)
-            binding.setCurrentText(element.binding_key)
-            binding.currentTextChanged.connect(
-                lambda v: self.apply_property("binding_key", str(v)))
-            form.addRow("Binding", binding)
-            form.addRow("Min", spin("min_value", -1000, 100000, is_float=True))
-            form.addRow("Max", spin("max_value", -999, 100001, is_float=True))
-            form.addRow("Radius", spin("radius", 10, 400, is_float=True))
-            form.addRow("Thickness", spin("thickness", 1, 80, is_float=True))
-        elif isinstance(element, ImageElement):
-            path_box = QLineEditSafe(element.asset_path)
-            path_box.editingFinished.connect(
-                lambda: self.apply_property("asset_path", path_box.text()))
-            form.addRow("Image path", path_box)
-            browse = QPushButton("Browse…")
-            browse.clicked.connect(self.browse_image)
-            form.addRow("", browse)
-            keep = QCheckBox()
-            keep.setChecked(element.keep_aspect)
-            keep.toggled.connect(lambda v: self.apply_property("keep_aspect", bool(v)))
-            form.addRow("Keep aspect", keep)
-        elif isinstance(element, ShapeElement):
-            form.addRow("Width", spin("width", 2, 480, is_float=True))
-            form.addRow("Height", spin("height", 2, 480, is_float=True))
-
-    def apply_property(self, attr, value):
-        element = self.selected_element()
-        if element is None:
-            return
-        setattr(element, attr, value)
-        self.canvas.refresh()
-
-    def browse_image(self):
-        element = self.selected_element()
-        if not isinstance(element, ImageElement):
-            return
-        path, _ = QFileDialog.getOpenFileName(self, "Import image", "",
-                                              "Images (*.png *.jpg *.jpeg *.bmp *.svg)")
-        if path:
-            element.asset_path = path
-            self.canvas.refresh()
-            self.build_inspector(self.canvas.selection)
-
-    # -- element ops -------------------------------------------------------------
-
-    def add_text(self):
-        self.layout_model.add(TextElement(id=f"text_{len(self.layout_model.elements)}",
-                                          name="CPU telemetry", x=240, y=240,
-                                          text="CPU {cpu_temp}°C", font_size=28))
-        self.after_mutation()
-
-    def add_ring(self):
-        self.layout_model.add(RingElement(id=f"ring_{len(self.layout_model.elements)}",
-                                          name="CPU ring", x=240, y=240,
-                                          binding_key="cpu_temp",
-                                          min_value=20, max_value=95))
-        self.after_mutation()
-
-    def delete_selected(self):
-        for element_id in list(self.canvas.selection):
-            self.layout_model.remove(element_id)
-        self.canvas.clear_selection()
-        self.after_mutation()
-
-    def duplicate_selected(self):
-        for element_id in list(self.canvas.selection):
-            self.layout_model.duplicate(element_id)
-        self.after_mutation()
-
-    def reorder_selected(self, mode: str):
-        for element_id in list(self.canvas.selection):
-            self.layout_model.reorder(element_id, mode)
-        self.after_mutation()
-
-    def after_mutation(self):
-        self.canvas.refresh()
-        self.refresh_layers()
-
-    # -- persistence / presets ------------------------------------------------------
-
-    def load_preset(self, name):
-        key = name.lower().replace(" ", "_")
-        layouts = get_all()
-        if key in layouts and key + "_x" != self.layout_model.name.lower().replace(" ", "_") + "_x":
-            self.undo_stack.push(deepcopy(self.layout_model.to_dict()))
-            self.layout_model = layouts[key]
-            self.canvas.layout = self.layout_model
-            self.live.layout = self.layout_model
-            self.canvas.clear_selection()
-            self.canvas.refresh()
-            self.refresh_layers()
-
-    def save_layout(self):
-        path, _ = QFileDialog.getSaveFileName(self, "Save layout", "",
-                                              "SPARTACUS Layout (*.slayout.json)")
-        if path:
-            self.layout_model.save(path)
-            self.status.setText(f"Saved {Path(path).name}")
-
-    def load_layout(self):
-        path, selected = QFileDialog.getOpenFileName(
-            self, "Load layout or QDT theme", "", "Layouts/QDT (*.json *.qdt)")
+    def open_json(self) -> None:
+        path, _ = QFileDialog.getOpenFileName(self, "Open theme", "",
+                                              "Theme (*.json)")
         if not path:
             return
         try:
-            self.undo_stack.push(deepcopy(self.layout_model.to_dict()))
-            notes: list[str] = []
-            if path.lower().endswith(".qdt"):
-                parser = QdtParser(Path.home() / ".cache" / "spartacus" / "qdt")
-                theme = parser.parse(extract(Path(path).read_bytes()), Path(path).name)
-                asset_paths = parser.export_assets(theme)
-                self.layout_model, notes = qdt_to_layout(theme, asset_paths)
-            else:
-                self.layout_model = LcdLayout.load(path)
-            self.canvas.layout = self.layout_model
-            self.live.layout = self.layout_model
-            self.canvas.clear_selection()
-            self.canvas.refresh()
-            self.refresh_layers()
-            self.status.setText("QDT imported · " + f"{len(notes)} notes"
-                                if notes else "Layout loaded")
-            if notes:
-                QMessageBox.information(self, "QDT import notes", "\n".join(notes[:12]))
+            self.push_undo()
+            self.spec = ThemeSpec.load(path)
+            self.selected = -1
+            self.refresh_all()
+            self.status.setText(f"Loaded {Path(path).name}")
         except Exception as exc:
-            QMessageBox.critical(self, "Load failed", str(exc))
+            QMessageBox.critical(self, "Open failed", str(exc))
 
-    # -- live mode / send -------------------------------------------------------------
+    def save_json(self) -> None:
+        target_dir = Path.home() / ".config" / "spartacus" / "themes"
+        target_dir.mkdir(parents=True, exist_ok=True)
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Save theme", str(target_dir / f"{self.spec.name or 'theme'}.json"),
+            "Theme (*.json)")
+        if not path:
+            return
+        try:
+            self.spec.save(path)
+            self.status.setText(f"Saved {Path(path).name}")
+        except Exception as exc:
+            QMessageBox.critical(self, "Save failed", str(exc))
 
-    def change_fps(self, text):
-        self.live.fps = int(text.split()[0])
-        if self.live.running:
-            self.live.stop()
-            self.live.start()
+    def export_png(self) -> None:
+        path, _ = QFileDialog.getSaveFileName(self, "Export PNG",
+                                              f"{self.spec.name or 'theme'}.png",
+                                              "PNG (*.png)")
+        if not path:
+            return
+        SpecRenderer(self.spec, self.live_metrics()).render().save(path)
+        self.status.setText(f"Exported {Path(path).name}")
 
-    def toggle_live(self):
-        if self.live.running:
-            self.live.stop()
-            self.live_button.setText("START LIVE")
+    def apply_to_daemon(self) -> None:
+        if not self.spec.name or not all(c.isalnum() or c in "-_" for c in self.spec.name):
+            QMessageBox.warning(self, "Invalid name",
+                                "Theme name must be letters, digits, '-' or '_'.")
+            return
+        try:
+            target_dir = Path.home() / ".config" / "spartacus" / "themes"
+            target_dir.mkdir(parents=True, exist_ok=True)
+            self.spec.save(target_dir / f"{self.spec.name}.json")
+            result = self.client.try_call("SetTheme", {"name": self.spec.name})
+            if result is not None:
+                self.status.setText(f"Daemon now renders '{self.spec.name}' natively. "
+                                    "It stays on the panel — no streaming needed.")
+            else:
+                self.status.setText("Saved theme, but daemon unreachable "
+                                    "(is spartacus-daemon running?)")
+        except Exception as exc:
+            QMessageBox.critical(self, "Apply failed", str(exc))
+
+    def add_widget(self, kind: str) -> None:
+        self.push_undo()
+        defaults = {
+            "panel": Widget(kind="panel", x=140, y=200, w=200, h=100, r=14,
+                            fill="#232833"),
+            "text": Widget(kind="text", x=240, y=240, size=24, align="center",
+                           fill="#FFFFFF", text="CPU {cpu_temp:.0}°C"),
+            "ring": Widget(kind="ring", cx=240, cy=240, r=90, thickness=12,
+                           track="#313949", fill="#00E5FF", binding="cpu_temp",
+                           min=0, max=100, center_text="{cpu_temp:.0}°",
+                           center_size=32),
+            "bar": Widget(kind="bar", x=120, y=240, w=240, h=10,
+                          track="#313949", fill="#00E5FF", binding="cpu_usage"),
+            "rect": Widget(kind="rect", x=140, y=220, w=200, h=40, fill="#10141F"),
+            "circle": Widget(kind="circle", cx=240, cy=240, r=40, fill="#10141F"),
+        }[kind]
+        self.spec.add(defaults)
+        self.selected = len(self.spec.widgets) - 1
+        self.refresh_all()
+
+    def duplicate_widget(self) -> None:
+        if self.selected < 0:
+            return
+        self.push_undo()
+        index = self.spec.duplicate(self.selected)
+        if index is not None:
+            self.selected = index
+        self.refresh_all()
+
+    def delete_widget(self) -> None:
+        if self.selected < 0:
+            return
+        self.push_undo()
+        self.spec.remove(self.selected)
+        self.selected = -1
+        self.refresh_all()
+
+    def move_widget(self, delta: int) -> None:
+        index = self.selected
+        if index < 0:
+            return
+        target = index + delta
+        if not (0 <= target < len(self.spec.widgets)):
+            return
+        self.push_undo()
+        widgets = self.spec.widgets
+        widgets[index], widgets[target] = widgets[target], widgets[index]
+        self.selected = target
+        self.refresh_all()
+
+    # -- selection / refresh -------------------------------------------------------
+
+    def on_list_select(self, row: int) -> None:
+        self.selected = row if 0 <= row < len(self.spec.widgets) else -1
+        self.canvas.selected = self.selected
+        self.canvas.update()
+        self.build_inspector()
+
+    def on_canvas_select(self, index: int) -> None:
+        self.selected = index
+        self.widget_list.blockSignals(True)
+        self.widget_list.setCurrentRow(index)
+        self.widget_list.blockSignals(False)
+        self.build_inspector()
+
+    def on_canvas_moved(self) -> None:
+        self.build_inspector()
+        self.canvas.update()
+
+    def refresh_all(self) -> None:
+        self.widget_list.blockSignals(True)
+        self.widget_list.clear()
+        for widget in self.spec.widgets:
+            self.widget_list.addItem(widget.name)
+        if self.selected >= len(self.spec.widgets):
+            self.selected = -1
+        self.widget_list.setCurrentRow(self.selected)
+        self.widget_list.blockSignals(False)
+        self.canvas.spec = self.spec
+        self.canvas.selected = self.selected
+        self.canvas.invalidate()
+        self.canvas.update()
+        self.build_inspector()
+
+    def refresh_live(self) -> None:
+        """Re-render with fresh telemetry values (no undo, no selection loss)."""
+        self.canvas.invalidate()
+        self.canvas.update()
+
+    # -- inspector -------------------------------------------------------------------
+
+    def build_inspector(self) -> None:
+        while self.inspector.count():
+            item = self.inspector.takeAt(0)
+            widget = item.widget()
+            if widget is not None:
+                widget.deleteLater()
+
+        bg_title = QLabel("Background")
+        bg_title.setObjectName("CardTitle")
+        self.inspector.addRow(bg_title)
+        bg = self.spec.background
+        kind_combo = QComboBox()
+        kind_combo.addItems(["gradient", "solid"])
+        kind_combo.setCurrentText(bg.get("kind", "gradient"))
+        kind_combo.currentTextChanged.connect(self.set_bg_kind)
+        self.inspector.addRow("Kind", kind_combo)
+        top_edit = QLineEditSafe(bg.get("top", "#0B0E1A"))
+        top_edit.editingFinished.connect(lambda: self.set_bg_color("top", top_edit.text()))
+        self.inspector.addRow("Top/Solid", top_edit)
+        if bg.get("kind") != "solid":
+            bottom_edit = QLineEditSafe(bg.get("bottom", "#101528"))
+            bottom_edit.editingFinished.connect(
+                lambda: self.set_bg_color("bottom", bottom_edit.text()))
+            self.inspector.addRow("Bottom", bottom_edit)
+
+        if self.selected < 0 or self.selected >= len(self.spec.widgets):
+            hint = QLabel("Select a widget to edit its properties.")
+            hint.setWordWrap(True)
+            self.inspector.addRow(hint)
+            return
+
+        widget = self.spec.widgets[self.selected]
+        title = QLabel(f"Widget · {widget.kind}")
+        title.setObjectName("CardTitle")
+        self.inspector.addRow(title)
+
+        numeric = {
+            "panel": ["x", "y", "w", "h", "r", "stroke_w"],
+            "rect": ["x", "y", "w", "h"],
+            "circle": ["cx", "cy", "r"],
+            "text": ["x", "y", "size"],
+            "ring": ["cx", "cy", "r", "thickness", "min", "max", "start", "sweep",
+                     "center_size"],
+            "bar": ["x", "y", "w", "h", "r", "min", "max"],
+        }.get(widget.kind, [])
+        colors = {
+            "panel": ["fill", "stroke"],
+            "rect": ["fill"],
+            "circle": ["fill"],
+            "text": ["fill"],
+            "ring": ["track", "fill"],
+            "bar": ["track", "fill"],
+        }.get(widget.kind, [])
+
+        for field_name in numeric:
+            spin = QDoubleSpinBox()
+            spin.setRange(-2000, 2000)
+            spin.setDecimals(1)
+            spin.setValue(float(getattr(widget, field_name)))
+            spin.valueChanged.connect(
+                lambda value, f=field_name: self.set_widget_prop(f, value))
+            self.inspector.addRow(field_name, spin)
+
+        for field_name in colors:
+            edit = QLineEditSafe(str(getattr(widget, field_name)))
+            edit.editingFinished.connect(
+                lambda f=field_name, e=edit: self.set_widget_prop(f, e.text()))
+            self.inspector.addRow(field_name, edit)
+
+        if widget.kind == "text":
+            text_edit = QLineEditSafe(widget.text)
+            text_edit.editingFinished.connect(
+                lambda: self.set_widget_prop("text", text_edit.text()))
+            self.inspector.addRow("text", text_edit)
+            align_combo = QComboBox()
+            align_combo.addItems(["left", "center", "right"])
+            align_combo.setCurrentText(widget.align)
+            align_combo.currentTextChanged.connect(
+                lambda value: self.set_widget_prop("align", value))
+            self.inspector.addRow("align", align_combo)
+            bind_combo = self._binding_combo(widget.text)
+            bind_combo.currentTextChanged.connect(self.insert_binding)
+            self.inspector.addRow("insert binding", bind_combo)
+
+        if widget.kind in ("ring", "bar"):
+            bind_combo = self._binding_combo(widget.binding, allow_empty=True)
+            bind_combo.currentTextChanged.connect(
+                lambda value: self.set_widget_prop("binding", value))
+            self.inspector.addRow("binding", bind_combo)
+
+        if widget.kind == "ring":
+            center_edit = QLineEditSafe(widget.center_text)
+            center_edit.editingFinished.connect(
+                lambda: self.set_widget_prop("center_text", center_edit.text()))
+            self.inspector.addRow("center_text", center_edit)
+
+    def _binding_combo(self, current: str, allow_empty: bool = False) -> QComboBox:
+        combo = QComboBox()
+        items = list(BINDINGS)
+        if allow_empty:
+            items.insert(0, "")
+        combo.addItems(items)
+        match = re.match(r"\{([a-z_]+)", current or "")
+        if match and match.group(1) in items:
+            combo.setCurrentText(match.group(1))
+        return combo
+
+    def insert_binding(self, key: str) -> None:
+        if self.selected < 0 or not key:
+            return
+        widget = self.spec.widgets[self.selected]
+        widget.text = f"{widget.text} {{{key}}}".strip()
+        self.push_undo()
+        self.refresh_all()
+
+    def set_bg_kind(self, kind: str) -> None:
+        self.spec.background["kind"] = kind
+        self.canvas.invalidate()
+        self.canvas.update()
+        self.build_inspector()
+
+    def set_bg_color(self, key: str, value: str) -> None:
+        self.spec.background[key] = value
+        self.canvas.invalidate()
+        self.canvas.update()
+
+    def set_widget_prop(self, name: str, value) -> None:
+        if self.selected < 0:
+            return
+        widget = self.spec.widgets[self.selected]
+        if not hasattr(widget, name):
+            return
+        current = getattr(widget, name)
+        if isinstance(current, float):
+            value = float(value)
+        elif isinstance(current, int):
+            value = int(float(value))
         else:
-            self.live.start()
-            self.live_button.setText("STOP LIVE")
-        self.live.stats_changed.connect(
-            lambda sent, dropped, error:
-            self.live_stats.setText(f"live: {sent} sent · {dropped} dropped"
-                                    + (f" · {error}" if error else "")))
+            value = str(value)
+        setattr(widget, name, value)
+        row = self.widget_list.currentItem()
+        if row is not None:
+            row.setText(widget.name)
+        self.canvas.invalidate()
+        self.canvas.update()
 
-    def realistic_preview(self):
-        renderer = LcdRenderer(self.layout_model, self.model.pipeline)
-        image = renderer.render(realistic=True, mask=False)
-        import io
 
-        from PyQt6.QtGui import QPixmap
+class ThemeCanvas(QWidget):
+    """Paints the theme spec preview; click selects, drag moves widgets."""
 
-        buffer = io.BytesIO()
-        image.save(buffer, format="PNG")
-        pixmap = QPixmap()
-        pixmap.loadFromData(buffer.getvalue())
-        self.canvas.scene.clear()
-        self.canvas.scene.addPixmap(pixmap)
-        self.status.setText("Realistic preview rendered")
+    widget_selected = pyqtSignal(int)
+    widget_moved = pyqtSignal()
+    edit_committed = pyqtSignal()
 
-    def send_to_lcd(self):
-        renderer = LcdRenderer(self.layout_model, self.model.pipeline)
-        result = LcdExporter(self.client).render_and_send(renderer)
-        if result.accepted:
-            self.status.setText(f"LCD accepted frame ({result.jpeg_bytes} B, "
-                                f"sum16={result.checksum16:#06x})")
+    def __init__(self, owner: ThemeStudioPage, parent=None):
+        super().__init__(parent)
+        self.owner = owner
+        self.spec = owner.spec
+        self.selected = -1
+        self._cache: Image.Image | None = None
+        self._drag_index = -1
+        self._grab = (0.0, 0.0)
+
+    def invalidate(self) -> None:
+        self._cache = None
+
+    def paintEvent(self, event) -> None:
+        from PyQt6.QtGui import QPixmap, QPainter
+
+        painter = QPainter(self)
+        if self._cache is None:
+            self._cache = SpecRenderer(self.spec, self.owner.live_metrics()).render()
+        data = self._cache.tobytes()
+        image = QImage(data, 480, 480, 480 * 3, QImage.Format.Format_RGB888)
+        painter.drawImage(2, 2, image)
+        if 0 <= self.selected < len(self.spec.widgets):
+            from core.theme.preview import widget_bbox
+
+            x1, y1, x2, y2 = widget_bbox(self.spec.widgets[self.selected])
+            pen = QPen(QColor("#00F0FF"))
+            pen.setStyle(Qt.PenStyle.DashLine)
+            painter.setPen(pen)
+            painter.drawRect(int(x1) + 2, int(y1) + 2,
+                             int(x2 - x1), int(y2 - y1))
+        painter.end()
+
+    def _canvas_pos(self, event) -> tuple[float, float]:
+        pos = event.position()
+        return (pos.x() - 2.0, pos.y() - 2.0)
+
+    def mousePressEvent(self, event) -> None:
+        from PyQt6.QtCore import QPointF
+
+        x, y = self._canvas_pos(event)
+        index = widget_at(self.spec, x, y)
+        self._drag_index = index if index is not None else -1
+        if index is not None:
+            widget = self.spec.widgets[index]
+            self._grab = (x - widget.x if widget.kind not in ("ring", "circle") else x - widget.cx,
+                          y - widget.y if widget.kind not in ("ring", "circle") else y - widget.cy)
+            self.widget_selected.emit(index)
         else:
-            self.status.setText(f"LCD send failed: {result.error}")
+            self.widget_selected.emit(-1)
+        self.update()
+
+    def mouseMoveEvent(self, event) -> None:
+        if self._drag_index < 0 or not (event.buttons() & Qt.MouseButton.LeftButton):
+            return
+        x, y = self._canvas_pos(event)
+        widget = self.spec.widgets[self._drag_index]
+        if widget.kind in ("ring", "circle"):
+            widget.cx = max(-200.0, min(680.0, x - self._grab[0]))
+            widget.cy = max(-200.0, min(680.0, y - self._grab[1]))
+        else:
+            widget.x = max(-200.0, min(680.0, x - self._grab[0]))
+            widget.y = max(-200.0, min(680.0, y - self._grab[1]))
+        self.invalidate()
+        self.widget_moved.emit()
+
+    def mouseReleaseEvent(self, event) -> None:
+        if self._drag_index >= 0:
+            self.edit_committed.emit()
+        self._drag_index = -1
 
 
 class QLineEditSafe(QLineEdit):
@@ -876,18 +1001,14 @@ class MainWindow(QWidget):
         self.daemon_pill = QLabel("Daemon Active")
         self.daemon_pill.setProperty("pill", "connected")
         self.pipeline_status = QLabel("Pipeline STALE")
-        self.send_lcd = QPushButton("SEND TO LCD")
-        self.send_lcd.setProperty("accent", "primary")
-        self.send_lcd.clicked.connect(self.send_current_lcd)
         top_layout.addWidget(self.device)
         top_layout.addStretch()
         top_layout.addWidget(self.connection)
         top_layout.addWidget(self.daemon_pill)
         top_layout.addWidget(self.pipeline_status)
-        top_layout.addWidget(self.send_lcd)
         content.addWidget(top)
 
-        studio_page = LcdStudioPage(self.ipc_client, self.telemetry)
+        studio_page = ThemeStudioPage(self.ipc_client, self.telemetry)
         pages = [
             OverviewPage(self.telemetry),
             ChannelSlidersPage(self.ipc_client, self.telemetry, "Cooling", mode="sliders"),
@@ -934,16 +1055,11 @@ class MainWindow(QWidget):
         if not connected:
             self.pipeline_status.setText("Pipeline STALE")
 
-    def send_current_lcd(self):
-        self.nav.setCurrentRow(self.page_names.index("LCD Studio"))
-        self.studio.send_to_lcd()
-
     def update_status(self, status: dict):
         self.on_status(status)
 
     def shutdown(self):
         self.telemetry_timer.stop()
-        self.studio.live.stop()
         self.worker.stop()
         self.ipc_client.close()
 

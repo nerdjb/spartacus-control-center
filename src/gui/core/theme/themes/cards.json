@@ -1,0 +1,70 @@
+{
+  "name": "cards",
+  "background": {"kind": "gradient", "top": "#331B55", "bottom": "#180C2E"},
+  "widgets": [
+    {"kind": "rect", "x": 0, "y": 0, "w": 480, "h": 56, "fill": "#3A215E"},
+    {"kind": "text", "x": 16, "y": 36, "size": 19, "fill": "#C8BCE0", "text": "{date}"},
+    {"kind": "text", "x": 240, "y": 42, "size": 34, "fill": "#FFFFFF", "align": "center", "text": "{time}"},
+    {"kind": "text", "x": 464, "y": 36, "size": 19, "fill": "#C8BCE0", "align": "right", "text": "GPU {gpu_temp:.0}C"},
+
+    {"kind": "panel", "x": 14, "y": 66, "w": 105, "h": 190, "r": 14, "fill": "#FFFFFF"},
+    {"kind": "text", "x": 66, "y": 92, "size": 17, "fill": "#8A8A92", "align": "center", "text": "CPU"},
+    {"kind": "text", "x": 66, "y": 138, "size": 36, "fill": "#202026", "align": "center", "text": "{cpu_usage:.0}%"},
+    {"kind": "bar", "x": 26, "y": 154, "w": 81, "h": 9, "track": "#F0E2E6", "fill": "#F3445C",
+     "binding": "cpu_usage", "min": 0, "max": 100},
+    {"kind": "text", "x": 40, "y": 222, "size": 11, "fill": "#9A9AA2", "align": "center", "text": "Freq"},
+    {"kind": "text", "x": 40, "y": 241, "size": 14, "fill": "#353540", "align": "center", "text": "{cpu_freq:.2}G"},
+    {"kind": "text", "x": 92, "y": 222, "size": 11, "fill": "#9A9AA2", "align": "center", "text": "Temp"},
+    {"kind": "text", "x": 92, "y": 241, "size": 14, "fill": "#353540", "align": "center", "text": "{cpu_temp:.0}C"},
+
+    {"kind": "panel", "x": 129, "y": 66, "w": 105, "h": 190, "r": 14, "fill": "#FFFFFF"},
+    {"kind": "text", "x": 181, "y": 92, "size": 17, "fill": "#8A8A92", "align": "center", "text": "GPU"},
+    {"kind": "text", "x": 181, "y": 138, "size": 36, "fill": "#202026", "align": "center", "text": "{gpu_usage:.0}%"},
+    {"kind": "bar", "x": 141, "y": 154, "w": 81, "h": 9, "track": "#F0E2E6", "fill": "#F26AA0",
+     "binding": "gpu_usage", "min": 0, "max": 100},
+    {"kind": "text", "x": 155, "y": 222, "size": 11, "fill": "#9A9AA2", "align": "center", "text": "Load"},
+    {"kind": "text", "x": 155, "y": 241, "size": 14, "fill": "#353540", "align": "center", "text": "{gpu_usage:.0}"},
+    {"kind": "text", "x": 207, "y": 222, "size": 11, "fill": "#9A9AA2", "align": "center", "text": "Temp"},
+    {"kind": "text", "x": 207, "y": 241, "size": 14, "fill": "#353540", "align": "center", "text": "{gpu_temp:.0}C"},
+
+    {"kind": "panel", "x": 244, "y": 66, "w": 105, "h": 190, "r": 14, "fill": "#FFFFFF"},
+    {"kind": "text", "x": 296, "y": 92, "size": 17, "fill": "#8A8A92", "align": "center", "text": "RAM"},
+    {"kind": "text", "x": 296, "y": 138, "size": 36, "fill": "#202026", "align": "center", "text": "{ram_pct:.0}%"},
+    {"kind": "bar", "x": 256, "y": 154, "w": 81, "h": 9, "track": "#F0E2E6", "fill": "#D43CB8",
+     "binding": "ram_pct", "min": 0, "max": 100},
+    {"kind": "text", "x": 270, "y": 222, "size": 11, "fill": "#9A9AA2", "align": "center", "text": "Used"},
+    {"kind": "text", "x": 270, "y": 241, "size": 14, "fill": "#353540", "align": "center", "text": "{ram_used:.1}G"},
+    {"kind": "text", "x": 322, "y": 222, "size": 11, "fill": "#9A9AA2", "align": "center", "text": "Free"},
+    {"kind": "text", "x": 322, "y": 241, "size": 14, "fill": "#353540", "align": "center", "text": "{ram_free:.1}G"},
+
+    {"kind": "panel", "x": 359, "y": 66, "w": 105, "h": 190, "r": 14, "fill": "#FFFFFF"},
+    {"kind": "text", "x": 411, "y": 92, "size": 17, "fill": "#8A8A92", "align": "center", "text": "SSD"},
+    {"kind": "text", "x": 411, "y": 138, "size": 36, "fill": "#202026", "align": "center", "text": "{disk_pct:.0}%"},
+    {"kind": "bar", "x": 371, "y": 154, "w": 81, "h": 9, "track": "#F0E2E6", "fill": "#8A4AD8",
+     "binding": "disk_pct", "min": 0, "max": 100},
+    {"kind": "text", "x": 385, "y": 222, "size": 11, "fill": "#9A9AA2", "align": "center", "text": "Used"},
+    {"kind": "text", "x": 385, "y": 241, "size": 14, "fill": "#353540", "align": "center", "text": "{disk_used:.0}G"},
+    {"kind": "text", "x": 437, "y": 222, "size": 11, "fill": "#9A9AA2", "align": "center", "text": "Free"},
+    {"kind": "text", "x": 437, "y": 241, "size": 14, "fill": "#353540", "align": "center", "text": "{disk_free:.0}G"},
+
+    {"kind": "panel", "x": 14, "y": 268, "w": 190, "h": 150, "r": 14, "fill": "#FFFFFF"},
+    {"kind": "text", "x": 30, "y": 302, "size": 17, "fill": "#9A9AA2", "text": "Upload"},
+    {"kind": "text", "x": 30, "y": 330, "size": 21, "fill": "#202026", "text": "{net_up:.2} kB/s"},
+    {"kind": "text", "x": 30, "y": 368, "size": 17, "fill": "#9A9AA2", "text": "Download"},
+    {"kind": "text", "x": 30, "y": 396, "size": 21, "fill": "#202026", "text": "{net_down:.2} kB/s"},
+
+    {"kind": "panel", "x": 214, "y": 268, "w": 152, "h": 150, "r": 14, "fill": "#FFFFFF"},
+    {"kind": "text", "x": 230, "y": 302, "size": 15, "fill": "#9A9AA2", "text": "PUMP FAN"},
+    {"kind": "text", "x": 230, "y": 330, "size": 22, "fill": "#202026", "text": "{pump_rpm:.0} RPM"},
+    {"kind": "text", "x": 230, "y": 368, "size": 15, "fill": "#9A9AA2", "text": "SYS FAN"},
+    {"kind": "text", "x": 230, "y": 396, "size": 22, "fill": "#202026", "text": "{fan_rpm:.0} RPM"},
+
+    {"kind": "panel", "x": 376, "y": 268, "w": 90, "h": 150, "r": 14, "fill": "#FFFFFF"},
+    {"kind": "ring", "cx": 421, "cy": 319, "r": 42, "thickness": 11,
+     "track": "#F6DFEA", "fill": "#F26AA0", "binding": "pump_pct", "min": 0, "max": 100,
+     "center_text": "{pump_pct:.0}%", "center_size": 22},
+    {"kind": "text", "x": 421, "y": 375, "size": 14, "fill": "#777782", "align": "center", "text": "PUMP"},
+
+    {"kind": "text", "x": 240, "y": 456, "size": 15, "fill": "#7A689A", "align": "center", "text": "SPARTACUS CONTROL"}
+  ]
+}

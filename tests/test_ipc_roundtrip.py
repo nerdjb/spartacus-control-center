@@ -74,7 +74,7 @@ class MockDaemon:
                     "mode": "auto", "points": params.get("points")}
         if method in ("SetFans", "SetFanSpeed", "SetPumpSpeed", "SetRGBMode",
                       "SetLighting", "SetMotherboardSync", "LcdKeepalive",
-                      "LcdSetConfig"):
+                      "LcdSetConfig", "SetTheme"):
             self.received_commands.append({"method": method, "params": params})
             payload = {"success": True}
             if method == "SetFans":
