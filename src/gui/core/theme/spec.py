@@ -120,7 +120,7 @@ def builtin_specs() -> dict[str, ThemeSpec]:
     """The daemon's embedded spec themes, as editable starting points."""
     root = Path(__file__).resolve().parent / "themes"
     out: dict[str, ThemeSpec] = {}
-    for name in ("cards", "cards-light", "neon", "aurora", "slate"):
+    for name in ("cards", "cards-light", "neon", "aurora", "slate", "aorus-rose"):
         path = root / f"{name}.json"
         if path.exists():
             try:

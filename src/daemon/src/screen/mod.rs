@@ -116,7 +116,8 @@ impl ScreenRenderer {
             "neon" => theme_spec::parse_spec(theme_spec::NEON_JSON).ok(),
             "aurora" => theme_spec::parse_spec(theme_spec::AURORA_JSON).ok(),
             "slate" => theme_spec::parse_spec(theme_spec::SLATE_JSON).ok(),
-            "cards" | "cards-light" | "colorful" | "rings" => None,
+            "aorus-rose" => theme_spec::parse_spec(theme_spec::AORUS_ROSE_JSON).ok(),
+            "cards" | "cards-light" | "colorful" | "rings" | "aorus-rose" => None,
             other => {
                 log::warn!("Theme '{other}' not found; using cards");
                 None
