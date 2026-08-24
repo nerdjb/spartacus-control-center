@@ -7,6 +7,24 @@
 
 set -e
 
+# --user mode: reverse scripts/setup.sh (no root needed)
+if [[ "${1:-}" == "--user" ]]; then
+    echo "Removing user-local installation..."
+    systemctl --user disable --now spartacus-daemon.service 2>/dev/null || true
+    rm -f ~/.config/systemd/user/spartacus-daemon.service
+    systemctl --user daemon-reload 2>/dev/null || true
+    pkill -x spartacus-daemon 2>/dev/null || true
+    pkill -f "spartacus/main.py" 2>/dev/null || true
+    rm -rf ~/.local/share/spartacus
+    rm -f ~/.local/bin/spartacus-daemon ~/.local/bin/spartacus-control-center
+    rm -f ~/.local/share/applications/spartacus-control-center.desktop
+    rm -f ~/.local/share/icons/hicolor/128x128/apps/spartacus-control.png
+    echo "✔ User installation removed (themes and curves in ~/.config/spartacus kept)."
+    echo "  Add --purge --user to also wipe themes, curves and the theme selection."
+    [[ "${2:-}" == "--purge" ]] && rm -rf ~/.config/spartacus && echo "✔ User data wiped."
+    exit 0
+fi
+
 echo "╔════════════════════════════════════════════╗"
 echo "║  Spartacus Control Center - Uninstaller    ║"
 echo "╚════════════════════════════════════════════╝"

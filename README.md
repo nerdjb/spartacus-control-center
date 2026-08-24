@@ -96,23 +96,33 @@ Pump/fans PWM, ARGB lighting, tachometry
 
 ## Quick start
 
+One command — builds, installs, sets up USB permissions, registers the
+daemon as a systemd **user** service (auto-starts on login) and creates
+a menu launcher:
+
 ```bash
 git clone https://github.com/nerdjb/spartacus-control-center.git
 cd spartacus-control-center
-./scripts/build.sh                      # builds the Rust daemon
-
-# permissions for raw USB access (one time)
-sudo cp packaging/99-spartacus.rules /etc/udev/rules.d/
-sudo udevadm control --reload-rules && sudo udevadm trigger
-
-# terminal 1 — daemon (owns the USB devices)
-cd src/daemon && cargo run --release
-
-# terminal 2 — GUI
-cd src/gui && python3 main.py
+./scripts/setup.sh
 ```
 
-You should see `● Connected` / `Pipeline LIVE` in the top bar and the built-in dashboard on the pump LCD.
+Then open **Spartacus Control Center** from your app menu (or run
+`spartacus-control-center`). You should see `● Connected` /
+`Pipeline LIVE` in the top bar and the dashboard on the pump LCD.
+
+<details>
+<summary>Manual / from-source run (no installation)</summary>
+
+```bash
+./scripts/build.sh                      # builds the Rust daemon
+cd src/daemon && cargo run --release    # terminal 1 — daemon
+cd src/gui && python3 main.py           # terminal 2 — GUI
+```
+
+USB permissions (one time): `sudo cp packaging/99-spartacus.rules /etc/udev/rules.d/ && sudo udevadm control --reload-rules && sudo udevadm trigger`
+</details>
+
+**Uninstall:** `./scripts/uninstall.sh --user` (add `--purge --user` to also wipe themes/curves).
 
 ## Installation
 
@@ -132,17 +142,7 @@ sudo ./scripts/install.sh               # /usr/bin + /usr/share/spartacus + udev
 
 ### User-local (no sudo)
 
-```bash
-install -m755 src/daemon/target/release/spartacus-daemon ~/.local/bin/
-mkdir -p ~/.local/share/spartacus
-cp -r src/gui/{ui,core,daemon,models,resources,main.py} ~/.local/share/spartacus/
-cat > ~/.local/bin/spartacus-control-center <<'SH'
-#!/bin/bash
-exec python3 "$HOME/.local/share/spartacus/main.py" "$@"
-SH
-chmod +x ~/.local/bin/spartacus-control-center
-```
-
+`./scripts/setup.sh` does exactly this for you (plus service + launcher).
 Runtime requirements: `libusb-1.0`, Python ≥ 3.11, `PyQt6`, `Pillow`.
 
 ### Uninstallation
