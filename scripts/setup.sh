@@ -90,6 +90,10 @@ sed "s|ExecStart=/usr/bin/spartacus-daemon|ExecStart=$BIN_DIR/spartacus-daemon|"
     "$PROJECT_DIR/packaging/spartacus-daemon.service" \
     > "$HOME/.config/systemd/user/$SERVICE_NAME"
 systemctl --user daemon-reload
+# stop a possibly manually-started daemon first — it would hold the USB
+# devices and the service could never connect ("Resource busy")
+pkill -f "/spartacus-daemon( |$)" 2>/dev/null || true
+sleep 1
 systemctl --user enable --now "$SERVICE_NAME" >/dev/null 2>&1 || true
 if systemctl --user is-active --quiet "$SERVICE_NAME"; then
     ok "daemon service running (auto-starts on login)"

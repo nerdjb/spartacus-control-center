@@ -13,8 +13,8 @@ if [[ "${1:-}" == "--user" ]]; then
     systemctl --user disable --now spartacus-daemon.service 2>/dev/null || true
     rm -f ~/.config/systemd/user/spartacus-daemon.service
     systemctl --user daemon-reload 2>/dev/null || true
-    pkill -x spartacus-daemon 2>/dev/null || true
-    pkill -f "spartacus/main.py" 2>/dev/null || true
+    pkill -f "/spartacus-daemon( |$)" 2>/dev/null || true
+    pkill -f "/spartacus/main.py" 2>/dev/null || true
     rm -rf ~/.local/share/spartacus
     rm -f ~/.local/bin/spartacus-daemon ~/.local/bin/spartacus-control-center
     rm -f ~/.local/share/applications/spartacus-control-center.desktop
@@ -44,8 +44,8 @@ systemctl --user stop spartacus-daemon.service 2>/dev/null || true
 if [[ -n "${SUDO_USER:-}" ]]; then
     sudo -u "$SUDO_USER" systemctl --user stop spartacus-daemon.service 2>/dev/null || true
 fi
-pkill -x spartacus-daemon 2>/dev/null || true
-pkill -f "spartacus/main.py" 2>/dev/null || true
+pkill -f "/spartacus-daemon( |$)" 2>/dev/null || true
+pkill -f "/spartacus/main.py" 2>/dev/null || true
 sleep 0.5
 echo "✓ Processes stopped"
 
