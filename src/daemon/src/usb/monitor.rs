@@ -128,6 +128,13 @@ impl USBMonitor {
             }
             DaemonCommand::SetMotherboardSync { enable, reply } => {
                 let result = self.controller.motherboard_sync(enable).await.map_err(|e| e.to_string());
+                if result.is_ok() {
+                    // While the motherboard owns the channels the automatic
+                    // curve loop must stay hands-off, or it would override
+                    // the hand-off one second later. Reclaiming restores it.
+                    let mut state = self.state.write().await;
+                    state.fan_control_auto = !enable;
+                }
                 let _ = reply.send(result);
             }
             DaemonCommand::SetTheme { name, reply } => {

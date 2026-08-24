@@ -112,6 +112,9 @@ class ChannelSlidersPage(QWidget):
         root.addWidget(heading)
 
         if mode == "sliders":
+            self.mb_sync = QCheckBox("Motherboard sync (fans + AIO follow motherboard)")
+            self.mb_sync.toggled.connect(self.send_mb_sync)
+            root.addWidget(self.mb_sync)
             form = QFormLayout()
             self.sliders = {}
             for name, minimum in (("Pump", 40), ("AIO", 0), ("EXT1", 0), ("EXT2", 0)):
@@ -165,6 +168,20 @@ class ChannelSlidersPage(QWidget):
         root.addStretch()
 
     # sliders ---------------------------------------------------------------
+
+    def send_mb_sync(self, enabled: bool):
+        result = self.client.set_motherboard_sync(enabled)
+        if result is not None:
+            self.mb_sync.setText("Motherboard sync ON — daemon is hands-off"
+                                 if enabled else "Motherboard sync (fans + AIO follow motherboard)")
+            for slider in getattr(self, "sliders", {}).values():
+                slider.setEnabled(not enabled)
+        else:
+            self.mb_sync.blockSignals(True)
+            self.mb_sync.setChecked(False)
+            self.mb_sync.blockSignals(False)
+            QMessageBox.warning(self, "Daemon unreachable",
+                                "Could not apply motherboard sync.")
 
     def send_fans(self):
         result = self.client.set_fans(
