@@ -10,6 +10,7 @@ mod usb;
 
 use anyhow::Result;
 use log::{error, info, Level, Log, Metadata, Record};
+use std::path::Path;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
@@ -145,8 +146,8 @@ async fn main() -> Result<()> {
 
     // Offline spec preview: --render-spec <file.json> <out.raw>
     if args.len() >= 4 && args[1] == "--render-spec" {
-        let json = std::fs::read_to_string(&args[2])?;
-        let spec = screen::theme_spec::parse_spec(&json).map_err(anyhow::Error::msg)?;
+        let spec = screen::theme_spec::parse_spec_file(Path::new(&args[2]))
+            .map_err(anyhow::Error::msg)?;
         let renderer = screen::ScreenRenderer::new("cards")?;
         let m = screen::Metrics {
             time: "22:26:51".into(),

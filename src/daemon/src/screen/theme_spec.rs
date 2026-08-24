@@ -29,6 +29,9 @@ use super::helpers;
 use super::Metrics;
 use fontdue::Font;
 use serde::Deserialize;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 // ---------------------------------------------------------------- spec model
 
@@ -36,6 +39,10 @@ use serde::Deserialize;
 pub struct ThemeSpec {
     #[serde(default)]
     pub name: String,
+    /// Directory the spec JSON lives in; relative image paths resolve here.
+    #[serde(skip)]
+    #[serde(default)]
+    pub base_dir: PathBuf,
     #[serde(default)]
     pub background: BackgroundSpec,
     #[serde(default)]
@@ -121,6 +128,46 @@ pub struct WidgetSpec {
     pub center_text: Option<String>,
     #[serde(default = "default_center_size")]
     pub center_size: f32,
+    /// Image file (PNG/JPEG), relative to the theme JSON's directory.
+    #[serde(default)]
+    pub path: Option<String>,
+}
+
+// ---------------------------------------------------------------- image cache
+
+pub struct ImageData {
+    pub w: u32,
+    pub h: u32,
+    pub rgba: Vec<u8>,
+}
+
+/// Decodes spec images once and caches them: the theme stream re-renders
+/// every refresh interval, so PNG/JPEG decoding must not run per frame.
+#[derive(Default)]
+pub struct ImageCache {
+    map: HashMap<PathBuf, Option<Arc<ImageData>>>,
+}
+
+impl ImageCache {
+    pub fn get(&mut self, path: &Path) -> Option<Arc<ImageData>> {
+        if let Some(hit) = self.map.get(path) {
+            return hit.clone();
+        }
+        let decoded = self.decode(path);
+        self.map.insert(path.to_path_buf(), decoded.clone());
+        decoded
+    }
+
+    fn decode(&self, path: &Path) -> Option<Arc<ImageData>> {
+        let bytes = std::fs::read(path).ok()?;
+        let img = image::load_from_memory(&bytes).ok()?;
+        let rgba = img.to_rgba8();
+        Some(Arc::new(ImageData {
+            w: rgba.width(),
+            h: rgba.height(),
+            rgba: rgba.into_raw(),
+        }))
+    }
 }
 
 fn default_align() -> String {
@@ -264,7 +311,13 @@ fn align_of(s: &str) -> Align {
 }
 
 /// Render a theme spec onto the canvas.
-pub fn render(c: &mut Canvas, spec: &ThemeSpec, m: &Metrics, font: &Font) {
+pub fn render(
+    c: &mut Canvas,
+    spec: &ThemeSpec,
+    m: &Metrics,
+    font: &Font,
+    images: &mut ImageCache,
+) {
     match spec.background.kind.as_str() {
         "solid" => c.rect(0, 0, 480, 480, parse_color(&spec.background.top)),
         _ => c.gradient_v(
@@ -275,11 +328,18 @@ pub fn render(c: &mut Canvas, spec: &ThemeSpec, m: &Metrics, font: &Font) {
         ),
     }
     for w in &spec.widgets {
-        draw_widget(c, w, m, font);
+        draw_widget(c, w, m, font, spec, images);
     }
 }
 
-fn draw_widget(c: &mut Canvas, w: &WidgetSpec, m: &Metrics, font: &Font) {
+fn draw_widget(
+    c: &mut Canvas,
+    w: &WidgetSpec,
+    m: &Metrics,
+    font: &Font,
+    spec: &ThemeSpec,
+    images: &mut ImageCache,
+) {
     match w.kind.as_str() {
         "panel" => {
             c.round_rect(
@@ -375,6 +435,26 @@ fn draw_widget(c: &mut Canvas, w: &WidgetSpec, m: &Metrics, font: &Font) {
                 c.round_rect(x, y, fw, bh, rad.min(fw / 2).min(bh / 2), fill);
             }
         }
+        "image" => {
+            if let Some(rel) = &w.path {
+                let path = if rel.starts_with('/') {
+                    PathBuf::from(rel)
+                } else {
+                    spec.base_dir.join(rel)
+                };
+                if let Some(img) = images.get(&path) {
+                    c.blit(
+                        w.x as i32,
+                        w.y as i32,
+                        w.w.max(1.0) as u32,
+                        w.h.max(1.0) as u32,
+                        img.w,
+                        img.h,
+                        &img.rgba,
+                    );
+                }
+            }
+        }
         _ => {}
     }
 }
@@ -389,6 +469,14 @@ pub const AORUS_ROSE_JSON: &str = include_str!("themes/aorus-rose.json");
 /// Parse a spec from JSON text.
 pub fn parse_spec(json: &str) -> Result<ThemeSpec, String> {
     serde_json::from_str(json).map_err(|e| e.to_string())
+}
+
+/// Parse a spec from a file and remember its directory for relative assets.
+pub fn parse_spec_file(path: &Path) -> Result<ThemeSpec, String> {
+    let json = std::fs::read_to_string(path).map_err(|e| e.to_string())?;
+    let mut spec = parse_spec(&json)?;
+    spec.base_dir = path.parent().unwrap_or(Path::new(".")).to_path_buf();
+    Ok(spec)
 }
 
 /// Look for a user/system theme file by name.
@@ -408,4 +496,3 @@ pub fn find_spec_file(name: &str) -> Option<PathBuf> {
     None
 }
 
-use std::path::PathBuf;

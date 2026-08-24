@@ -290,3 +290,44 @@ pub fn lerp(a: Color, b: Color, t: f32) -> Color {
         (a[2] as f32 + (b[2] - a[2]) as f32 * t) as u8,
     ]
 }
+
+impl Canvas {
+    /// Scale an RGBA bitmap to (w, h) and alpha-blend it at (x, y).
+    /// Nearest-neighbor sampling; images are pre-scaled by design, so this
+    /// is only a safety rescale.
+    pub fn blit(
+        &mut self,
+        x: i32,
+        y: i32,
+        w: u32,
+        h: u32,
+        src_w: u32,
+        src_h: u32,
+        rgba: &[u8],
+    ) {
+        if w == 0 || h == 0 || src_w == 0 || src_h == 0 {
+            return;
+        }
+        for dy in 0..h {
+            let py = y + dy as i32;
+            if py < 0 || py >= self.h as i32 {
+                continue;
+            }
+            let sy = (dy as u64 * src_h as u64 / h as u64) as u32;
+            for dx in 0..w {
+                let px = x + dx as i32;
+                if px < 0 || px >= self.w as i32 {
+                    continue;
+                }
+                let sx = (dx as u64 * src_w as u64 / w as u64) as u32;
+                let si = ((sy * src_w + sx) * 4) as usize;
+                if si + 3 >= rgba.len() || rgba[si + 3] == 0 {
+                    continue;
+                }
+                let di = ((py as usize) * self.w + px as usize) * 3;
+                blend_pixel(&mut self.px[di..di + 3],
+                            [rgba[si], rgba[si + 1], rgba[si + 2]], rgba[si + 3]);
+            }
+        }
+    }
+}

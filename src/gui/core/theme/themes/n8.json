@@ -1,0 +1,378 @@
+{
+ "name": "n8",
+ "background": {
+  "kind": "gradient",
+  "top": "#bebebe",
+  "bottom": "#686868"
+ },
+ "widgets": [
+  {
+   "kind": "ring",
+   "cx": 76.0,
+   "cy": 234.0,
+   "r": 37.5,
+   "thickness": 10.0,
+   "track": "#f1f6fa",
+   "fill": "#f79ea9",
+   "binding": "cpu_usage",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "ring",
+   "cx": 269.0,
+   "cy": 246.0,
+   "r": 37.5,
+   "thickness": 10.0,
+   "track": "#f1f6fa",
+   "fill": "#4caf50",
+   "binding": "ram_pct",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 270.0
+  },
+  {
+   "kind": "text",
+   "x": 269.0,
+   "y": 232.5,
+   "size": 33,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{ram_pct}"
+  },
+  {
+   "kind": "ring",
+   "cx": 257.0,
+   "cy": 81.0,
+   "r": 34.6,
+   "thickness": 9.2,
+   "track": "#f1f6fa",
+   "fill": "#2196f3",
+   "binding": "gpu_usage",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "text",
+   "x": 118.0,
+   "y": 366.1,
+   "size": 17,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{net_up:.1}mb/s"
+  },
+  {
+   "kind": "text",
+   "x": 118.0,
+   "y": 423.1,
+   "size": 17,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{net_down:.1}mb/s"
+  },
+  {
+   "kind": "text",
+   "x": 155.0,
+   "y": 180.0,
+   "size": 16,
+   "fill": "#f5f5f5",
+   "align": "center",
+   "text": "Intel-i5-14500"
+  },
+  {
+   "kind": "text",
+   "x": 324.0,
+   "y": 31.5,
+   "size": 13,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "RTX4060Ti-8G"
+  },
+  {
+   "kind": "text",
+   "x": 77.0,
+   "y": 234.0,
+   "size": 37,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{cpu_usage}"
+  },
+  {
+   "kind": "text",
+   "x": 257.0,
+   "y": 81.0,
+   "size": 34,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{gpu_usage}"
+  },
+  {
+   "kind": "text",
+   "x": 283.0,
+   "y": 442.5,
+   "size": 18,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{cpu_temp}°C"
+  },
+  {
+   "kind": "text",
+   "x": 160.0,
+   "y": 286.5,
+   "size": 19,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{cpu_freq:.2}"
+  },
+  {
+   "kind": "text",
+   "x": 283.0,
+   "y": 352.5,
+   "size": 18,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{gpu_temp}°C"
+  },
+  {
+   "kind": "text",
+   "x": 332.0,
+   "y": 124.5,
+   "size": 19,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "5.4 GB"
+  },
+  {
+   "kind": "text",
+   "x": 302.0,
+   "y": 178.5,
+   "size": 17,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "16G"
+  },
+  {
+   "kind": "text",
+   "x": 178.0,
+   "y": 351.0,
+   "size": 14,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "CPU Temp"
+  },
+  {
+   "kind": "text",
+   "x": 167.0,
+   "y": 238.5,
+   "size": 18,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "Speed"
+  },
+  {
+   "kind": "text",
+   "x": 190.0,
+   "y": 286.5,
+   "size": 19,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "G"
+  },
+  {
+   "kind": "text",
+   "x": 30.0,
+   "y": 177.0,
+   "size": 19,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "CPU"
+  },
+  {
+   "kind": "text",
+   "x": 78.0,
+   "y": 270.0,
+   "size": 14,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 210.0,
+   "y": 33.0,
+   "size": 19,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "GPU"
+  },
+  {
+   "kind": "text",
+   "x": 270.0,
+   "y": 265.5,
+   "size": 14,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 259.0,
+   "y": 114.0,
+   "size": 14,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 269.0,
+   "y": 288.0,
+   "size": 19,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "RAM"
+  },
+  {
+   "kind": "text",
+   "x": 332.0,
+   "y": 88.5,
+   "size": 18,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "Varm"
+  },
+  {
+   "kind": "text",
+   "x": 92.0,
+   "y": 61.5,
+   "size": 42,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "14:08:24"
+  },
+  {
+   "kind": "ring",
+   "cx": 402.0,
+   "cy": 247.5,
+   "r": 50.2,
+   "thickness": 13.4,
+   "track": "#f1f6fa",
+   "fill": "#5233fe",
+   "binding": "disk_pct",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 270.0
+  },
+  {
+   "kind": "text",
+   "x": 56.0,
+   "y": 117.0,
+   "size": 15,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "2025/12/18"
+  },
+  {
+   "kind": "text",
+   "x": 402.0,
+   "y": 310.5,
+   "size": 27,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "SSD"
+  },
+  {
+   "kind": "text",
+   "x": 402.0,
+   "y": 237.0,
+   "size": 50,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{disk_pct}"
+  },
+  {
+   "kind": "text",
+   "x": 402.0,
+   "y": 279.0,
+   "size": 19,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 178.0,
+   "y": 448.5,
+   "size": 14,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "GPU Temp"
+  },
+  {
+   "kind": "bar",
+   "x": 147.0,
+   "y": 372.8,
+   "w": 160.0,
+   "h": 15.0,
+   "track": "#f1f6fa",
+   "fill": "#ffb74d",
+   "binding": "cpu_temp",
+   "min": 0,
+   "max": 120
+  },
+  {
+   "kind": "bar",
+   "x": 147.0,
+   "y": 402.8,
+   "w": 160.0,
+   "h": 15.0,
+   "track": "#f1f6fa",
+   "fill": "#f06292",
+   "binding": "gpu_temp",
+   "min": 0,
+   "max": 120
+  },
+  {
+   "kind": "image",
+   "x": 346.0,
+   "y": 417.0,
+   "w": 28.0,
+   "h": 42.0,
+   "path": "assets/n8_1.png"
+  },
+  {
+   "kind": "bar",
+   "x": 340.2,
+   "y": 378.6,
+   "w": 120.0,
+   "h": 18.0,
+   "track": "#dddddd",
+   "fill": "#111111",
+   "binding": "",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "kind": "image",
+   "x": 9.0,
+   "y": 348.0,
+   "w": 30.0,
+   "h": 30.0,
+   "path": "assets/n8_2.png"
+  },
+  {
+   "kind": "image",
+   "x": 9.0,
+   "y": 409.5,
+   "w": 30.0,
+   "h": 30.0,
+   "path": "assets/n8_3.png"
+  }
+ ]
+}

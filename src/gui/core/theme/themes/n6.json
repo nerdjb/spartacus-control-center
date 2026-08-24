@@ -1,0 +1,364 @@
+{
+ "name": "n6",
+ "background": {
+  "kind": "gradient",
+  "top": "#bebebe",
+  "bottom": "#686868"
+ },
+ "widgets": [
+  {
+   "kind": "text",
+   "x": 121.0,
+   "y": 284.7,
+   "size": 18,
+   "fill": "#12cef0",
+   "align": "center",
+   "text": "2025/12/17"
+  },
+  {
+   "kind": "ring",
+   "cx": 69.0,
+   "cy": 382.5,
+   "r": 40.6,
+   "thickness": 8.9,
+   "track": "#eeeeee",
+   "fill": "#111111",
+   "binding": "ram_pct",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "text",
+   "x": 281.0,
+   "y": 288.4,
+   "size": 23,
+   "fill": "#12cef0",
+   "align": "center",
+   "text": "14:21:29"
+  },
+  {
+   "kind": "text",
+   "x": 84.0,
+   "y": 60.0,
+   "size": 19,
+   "fill": "#f8a5a0",
+   "align": "center",
+   "text": "Intel-i5-14500"
+  },
+  {
+   "kind": "text",
+   "x": 224.0,
+   "y": 60.0,
+   "size": 19,
+   "fill": "#c3ebf5",
+   "align": "center",
+   "text": "RTX4060Ti-8G"
+  },
+  {
+   "kind": "text",
+   "x": 423.0,
+   "y": 64.5,
+   "size": 21,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{cpu_temp}°C"
+  },
+  {
+   "kind": "text",
+   "x": 408.0,
+   "y": 360.1,
+   "size": 17,
+   "fill": "#44fbff",
+   "align": "center",
+   "text": "{net_up:.1}mb/s"
+  },
+  {
+   "kind": "text",
+   "x": 408.0,
+   "y": 414.1,
+   "size": 17,
+   "fill": "#44fbff",
+   "align": "center",
+   "text": "{net_down:.1}mb/s"
+  },
+  {
+   "kind": "text",
+   "x": 423.0,
+   "y": 130.5,
+   "size": 21,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{gpu_temp}°C"
+  },
+  {
+   "kind": "text",
+   "x": 129.0,
+   "y": 433.5,
+   "size": 21,
+   "fill": "#66f5ab",
+   "align": "center",
+   "text": "16G"
+  },
+  {
+   "kind": "text",
+   "x": 605.0,
+   "y": 379.5,
+   "size": 19,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{disk_used}GB"
+  },
+  {
+   "kind": "text",
+   "x": 61.0,
+   "y": 391.5,
+   "size": 34,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{ram_pct}"
+  },
+  {
+   "kind": "ring",
+   "cx": 84.0,
+   "cy": 166.5,
+   "r": 52.5,
+   "thickness": 11.5,
+   "track": "#eeeeee",
+   "fill": "#111111",
+   "binding": "cpu_usage",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "text",
+   "x": 74.0,
+   "y": 175.5,
+   "size": 50,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{cpu_usage}"
+  },
+  {
+   "kind": "ring",
+   "cx": 224.0,
+   "cy": 166.5,
+   "r": 52.5,
+   "thickness": 11.5,
+   "track": "#eeeeee",
+   "fill": "#111111",
+   "binding": "gpu_usage",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "text",
+   "x": 212.0,
+   "y": 175.5,
+   "size": 50,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{gpu_usage}"
+  },
+  {
+   "kind": "text",
+   "x": 252.0,
+   "y": 184.5,
+   "size": 15,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "image",
+   "x": 428.0,
+   "y": 340.5,
+   "w": 30.0,
+   "h": 45.0,
+   "path": "assets/n6_1.png"
+  },
+  {
+   "kind": "text",
+   "x": 81.0,
+   "y": 126.0,
+   "size": 25,
+   "fill": "#fe7381",
+   "align": "center",
+   "text": "CPU"
+  },
+  {
+   "kind": "text",
+   "x": 112.0,
+   "y": 184.5,
+   "size": 15,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 221.0,
+   "y": 126.0,
+   "size": 25,
+   "fill": "#3dbefc",
+   "align": "center",
+   "text": "GPU"
+  },
+  {
+   "kind": "text",
+   "x": 68.0,
+   "y": 354.0,
+   "size": 19,
+   "fill": "#67f6ae",
+   "align": "center",
+   "text": "RAM"
+  },
+  {
+   "kind": "text",
+   "x": 93.0,
+   "y": 391.5,
+   "size": 14,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 343.0,
+   "y": 64.5,
+   "size": 14,
+   "fill": "#12cef0",
+   "align": "center",
+   "text": "CPU Temp"
+  },
+  {
+   "kind": "image",
+   "x": 302.0,
+   "y": 349.5,
+   "w": 16.0,
+   "h": 24.0,
+   "path": "assets/n6_2.png"
+  },
+  {
+   "kind": "image",
+   "x": 302.0,
+   "y": 403.5,
+   "w": 16.0,
+   "h": 24.0,
+   "path": "assets/n6_3.png"
+  },
+  {
+   "kind": "bar",
+   "x": 310.1,
+   "y": 86.2,
+   "w": 144.0,
+   "h": 15.0,
+   "track": "#dddddd",
+   "fill": "#f23a00",
+   "binding": "cpu_temp",
+   "min": 0,
+   "max": 120
+  },
+  {
+   "kind": "text",
+   "x": 343.0,
+   "y": 129.0,
+   "size": 14,
+   "fill": "#12cef0",
+   "align": "center",
+   "text": "GPU Temp"
+  },
+  {
+   "kind": "bar",
+   "x": 310.1,
+   "y": 149.2,
+   "w": 144.0,
+   "h": 15.0,
+   "track": "#f1f6fa",
+   "fill": "#ee3102",
+   "binding": "gpu_usage",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "kind": "text",
+   "x": 343.0,
+   "y": 195.0,
+   "size": 14,
+   "fill": "#12cef0",
+   "align": "center",
+   "text": "CPU FUN"
+  },
+  {
+   "kind": "text",
+   "x": 340.0,
+   "y": 229.5,
+   "size": 15,
+   "fill": "#f8fc75",
+   "align": "center",
+   "text": "{fan_rpm}RPM"
+  },
+  {
+   "kind": "text",
+   "x": 423.0,
+   "y": 195.0,
+   "size": 14,
+   "fill": "#12cef0",
+   "align": "center",
+   "text": "GPU FUN"
+  },
+  {
+   "kind": "text",
+   "x": 423.0,
+   "y": 229.5,
+   "size": 15,
+   "fill": "#f8fc75",
+   "align": "center",
+   "text": "1300 RPM"
+  },
+  {
+   "kind": "text",
+   "x": 194.0,
+   "y": 354.0,
+   "size": 26,
+   "fill": "#b341fd",
+   "align": "center",
+   "text": "HDD"
+  },
+  {
+   "kind": "text",
+   "x": 256.0,
+   "y": 391.5,
+   "size": 24,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{disk_pct}%"
+  },
+  {
+   "kind": "bar",
+   "x": 176.3,
+   "y": 408.8,
+   "w": 104.0,
+   "h": 15.0,
+   "track": "#f1f6fa",
+   "fill": "#6b44fe",
+   "binding": "disk_pct",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "kind": "text",
+   "x": 161.0,
+   "y": 417.0,
+   "size": 19,
+   "fill": "#e45aba",
+   "align": "center",
+   "text": "C:"
+  }
+ ]
+}

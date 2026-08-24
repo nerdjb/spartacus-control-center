@@ -1,0 +1,419 @@
+{
+ "name": "a1",
+ "background": {
+  "kind": "gradient",
+  "top": "#101018",
+  "bottom": "#08080d"
+ },
+ "widgets": [
+  {
+   "kind": "text",
+   "x": 77.0,
+   "y": 36.0,
+   "size": 24,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "SystemTime"
+  },
+  {
+   "kind": "text",
+   "x": 415.0,
+   "y": 262.5,
+   "size": 13,
+   "fill": "#191818",
+   "align": "center",
+   "text": "CPU FanSpeed"
+  },
+  {
+   "kind": "text",
+   "x": 415.0,
+   "y": 322.5,
+   "size": 13,
+   "fill": "#0a0a0a",
+   "align": "center",
+   "text": "GPU FanSpeed"
+  },
+  {
+   "kind": "text",
+   "x": 227.0,
+   "y": 270.0,
+   "size": 16,
+   "fill": "#0f0f0f",
+   "align": "center",
+   "text": "上传速度"
+  },
+  {
+   "kind": "text",
+   "x": 226.0,
+   "y": 342.0,
+   "size": 16,
+   "fill": "#0e0d0d",
+   "align": "center",
+   "text": "下载速度"
+  },
+  {
+   "kind": "text",
+   "x": 226.0,
+   "y": 88.5,
+   "size": 16,
+   "fill": "#131212",
+   "align": "center",
+   "text": "磁盘负载"
+  },
+  {
+   "kind": "text",
+   "x": 334.0,
+   "y": 88.5,
+   "size": 16,
+   "fill": "#0c0b0b",
+   "align": "center",
+   "text": "内存负载"
+  },
+  {
+   "kind": "text",
+   "x": 43.0,
+   "y": 88.5,
+   "size": 16,
+   "fill": "#0a0a0a",
+   "align": "center",
+   "text": "CPU负载"
+  },
+  {
+   "kind": "text",
+   "x": 156.0,
+   "y": 88.5,
+   "size": 16,
+   "fill": "#141414",
+   "align": "center",
+   "text": "主频"
+  },
+  {
+   "kind": "text",
+   "x": 142.0,
+   "y": 165.0,
+   "size": 16,
+   "fill": "#131212",
+   "align": "center",
+   "text": "CPU温度"
+  },
+  {
+   "kind": "text",
+   "x": 43.0,
+   "y": 264.0,
+   "size": 16,
+   "fill": "#0c0c0c",
+   "align": "center",
+   "text": "GPU负载"
+  },
+  {
+   "kind": "text",
+   "x": 156.0,
+   "y": 270.0,
+   "size": 16,
+   "fill": "#141414",
+   "align": "center",
+   "text": "主频"
+  },
+  {
+   "kind": "text",
+   "x": 142.0,
+   "y": 342.0,
+   "size": 16,
+   "fill": "#0a0a0a",
+   "align": "center",
+   "text": "GPU温度"
+  },
+  {
+   "kind": "text",
+   "x": 436.0,
+   "y": 213.0,
+   "size": 19,
+   "fill": "#0f0f0f",
+   "align": "center",
+   "text": "16 GB"
+  },
+  {
+   "kind": "ring",
+   "cx": 59.0,
+   "cy": 163.5,
+   "r": 31.3,
+   "thickness": 10.4,
+   "track": "#eeeeee",
+   "fill": "#111111",
+   "binding": "cpu_usage",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "text",
+   "x": 142.0,
+   "y": 124.5,
+   "size": 19,
+   "fill": "#161515",
+   "align": "center",
+   "text": "{cpu_freq:.2}GHz"
+  },
+  {
+   "kind": "ring",
+   "cx": 239.0,
+   "cy": 163.5,
+   "r": 30.3,
+   "thickness": 10.1,
+   "track": "#eeeeee",
+   "fill": "#111111",
+   "binding": "disk_pct",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "text",
+   "x": 437.0,
+   "y": 124.5,
+   "size": 19,
+   "fill": "#201e1e",
+   "align": "center",
+   "text": "{ram_free:.1}GB"
+  },
+  {
+   "kind": "ring",
+   "cx": 344.0,
+   "cy": 163.5,
+   "r": 29.7,
+   "thickness": 9.9,
+   "track": "#eeeeee",
+   "fill": "#111111",
+   "binding": "ram_pct",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "ring",
+   "cx": 59.0,
+   "cy": 345.0,
+   "r": 30.7,
+   "thickness": 10.2,
+   "track": "#eeeeee",
+   "fill": "#111111",
+   "binding": "gpu_usage",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "text",
+   "x": 58.0,
+   "y": 342.0,
+   "size": 32,
+   "fill": "#ea4343",
+   "align": "center",
+   "text": "{gpu_usage}"
+  },
+  {
+   "kind": "text",
+   "x": 142.0,
+   "y": 304.5,
+   "size": 19,
+   "fill": "#1d1c1c",
+   "align": "center",
+   "text": "1.23 GHz"
+  },
+  {
+   "kind": "text",
+   "x": 240.0,
+   "y": 304.5,
+   "size": 17,
+   "fill": "#131212",
+   "align": "center",
+   "text": "{net_up:.1}kb/s"
+  },
+  {
+   "kind": "text",
+   "x": 240.0,
+   "y": 388.5,
+   "size": 17,
+   "fill": "#1b1a1a",
+   "align": "center",
+   "text": "{net_down:.1}kb/s"
+  },
+  {
+   "kind": "text",
+   "x": 385.0,
+   "y": 294.0,
+   "size": 19,
+   "fill": "#181616",
+   "align": "center",
+   "text": "{fan_rpm}RPM"
+  },
+  {
+   "kind": "text",
+   "x": 385.0,
+   "y": 355.5,
+   "size": 19,
+   "fill": "#0c0b0b",
+   "align": "center",
+   "text": "1300 RPM"
+  },
+  {
+   "kind": "text",
+   "x": 434.0,
+   "y": 88.5,
+   "size": 16,
+   "fill": "#181616",
+   "align": "center",
+   "text": "可用内存"
+  },
+  {
+   "kind": "text",
+   "x": 239.0,
+   "y": 163.5,
+   "size": 32,
+   "fill": "#33222B",
+   "align": "center",
+   "text": "{disk_pct}"
+  },
+  {
+   "kind": "text",
+   "x": 425.0,
+   "y": 36.0,
+   "size": 24,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "13:44:07"
+  },
+  {
+   "kind": "text",
+   "x": 54.0,
+   "y": 451.5,
+   "size": 19,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "2025-11-17"
+  },
+  {
+   "kind": "bar",
+   "x": 335.2,
+   "y": 383.5,
+   "w": 128.0,
+   "h": 13.3,
+   "track": "#dddddd",
+   "fill": "#111111",
+   "binding": "",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "kind": "text",
+   "x": 142.0,
+   "y": 213.0,
+   "size": 19,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{cpu_temp}°C"
+  },
+  {
+   "kind": "text",
+   "x": 142.0,
+   "y": 388.5,
+   "size": 19,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{gpu_temp}°C"
+  },
+  {
+   "kind": "text",
+   "x": 60.0,
+   "y": 163.5,
+   "size": 32,
+   "fill": "#3d71f8",
+   "align": "center",
+   "text": "{cpu_usage}"
+  },
+  {
+   "kind": "text",
+   "x": 60.0,
+   "y": 192.0,
+   "size": 19,
+   "fill": "#3e72f8",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 345.0,
+   "y": 193.5,
+   "size": 19,
+   "fill": "#963aec",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 344.0,
+   "y": 163.5,
+   "size": 32,
+   "fill": "#9a42ed",
+   "align": "center",
+   "text": "{ram_pct}"
+  },
+  {
+   "kind": "text",
+   "x": 239.0,
+   "y": 193.5,
+   "size": 19,
+   "fill": "#11bb47",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 437.0,
+   "y": 165.0,
+   "size": 16,
+   "fill": "#111010",
+   "align": "center",
+   "text": "总内存"
+  },
+  {
+   "kind": "text",
+   "x": 59.0,
+   "y": 370.5,
+   "size": 19,
+   "fill": "#f70505",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 411.0,
+   "y": 451.5,
+   "size": 19,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "天气"
+  },
+  {
+   "kind": "text",
+   "x": 238.0,
+   "y": 451.5,
+   "size": 13,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "Monitoered Control Sysyom"
+  },
+  {
+   "kind": "image",
+   "x": 308.0,
+   "y": 373.5,
+   "w": 20.0,
+   "h": 30.0,
+   "path": "assets/a1_1.png"
+  }
+ ]
+}

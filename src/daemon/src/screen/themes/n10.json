@@ -1,0 +1,331 @@
+{
+ "name": "n10",
+ "background": {
+  "kind": "gradient",
+  "top": "#bebebe",
+  "bottom": "#686868"
+ },
+ "widgets": [
+  {
+   "kind": "ring",
+   "cx": 75.0,
+   "cy": 166.5,
+   "r": 45.0,
+   "thickness": 12.0,
+   "track": "#ffffff",
+   "fill": "#45afff",
+   "binding": "cpu_usage",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "ring",
+   "cx": 376.0,
+   "cy": 166.5,
+   "r": 45.0,
+   "thickness": 12.0,
+   "track": "#ffffff",
+   "fill": "#44cff7",
+   "binding": "ram_pct",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "text",
+   "x": 368.0,
+   "y": 169.5,
+   "size": 43,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{ram_pct}"
+  },
+  {
+   "kind": "ring",
+   "cx": 75.0,
+   "cy": 379.5,
+   "r": 45.0,
+   "thickness": 12.0,
+   "track": "#ffffff",
+   "fill": "#fb69ff",
+   "binding": "gpu_usage",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "text",
+   "x": 68.0,
+   "y": 166.5,
+   "size": 43,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{cpu_usage}"
+  },
+  {
+   "kind": "text",
+   "x": 68.0,
+   "y": 379.5,
+   "size": 43,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{gpu_usage}"
+  },
+  {
+   "kind": "text",
+   "x": 449.0,
+   "y": 226.5,
+   "size": 28,
+   "fill": "#3fece8",
+   "align": "center",
+   "text": "16G"
+  },
+  {
+   "kind": "text",
+   "x": 149.0,
+   "y": 198.0,
+   "size": 17,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "Temp"
+  },
+  {
+   "kind": "text",
+   "x": 33.0,
+   "y": 88.5,
+   "size": 21,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "CPU"
+  },
+  {
+   "kind": "text",
+   "x": 103.0,
+   "y": 175.5,
+   "size": 15,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 33.0,
+   "y": 297.0,
+   "size": 21,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "GPU"
+  },
+  {
+   "kind": "text",
+   "x": 334.0,
+   "y": 88.5,
+   "size": 21,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "RAM"
+  },
+  {
+   "kind": "text",
+   "x": 240.0,
+   "y": 21.2,
+   "size": 25,
+   "fill": "#f8ecfc",
+   "align": "center",
+   "text": "15:34:48"
+  },
+  {
+   "kind": "ring",
+   "cx": 376.0,
+   "cy": 379.5,
+   "r": 45.0,
+   "thickness": 12.0,
+   "track": "#ffffff",
+   "fill": "#9f38f4",
+   "binding": "disk_pct",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "text",
+   "x": 55.0,
+   "y": 40.5,
+   "size": 16,
+   "fill": "#ff007f",
+   "align": "center",
+   "text": "2025/12/18"
+  },
+  {
+   "kind": "text",
+   "x": 103.0,
+   "y": 388.5,
+   "size": 15,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 334.0,
+   "y": 297.0,
+   "size": 21,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "SSD"
+  },
+  {
+   "kind": "text",
+   "x": 375.0,
+   "y": 379.5,
+   "size": 43,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{disk_pct}"
+  },
+  {
+   "kind": "text",
+   "x": 408.0,
+   "y": 388.5,
+   "size": 15,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 403.0,
+   "y": 177.0,
+   "size": 15,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "image",
+   "x": 228.0,
+   "y": 384.0,
+   "w": 26.0,
+   "h": 39.0,
+   "path": "assets/n10_1.png"
+  },
+  {
+   "kind": "text",
+   "x": 444.0,
+   "y": 445.5,
+   "size": 19,
+   "fill": "#3fece8",
+   "align": "center",
+   "text": "{disk_total}GB"
+  },
+  {
+   "kind": "text",
+   "x": 227.0,
+   "y": 102.0,
+   "size": 18,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "CPU FAN"
+  },
+  {
+   "kind": "text",
+   "x": 247.0,
+   "y": 139.5,
+   "size": 23,
+   "fill": "#ff007f",
+   "align": "center",
+   "text": "{fan_rpm}RPM"
+  },
+  {
+   "kind": "text",
+   "x": 227.0,
+   "y": 186.0,
+   "size": 18,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "GPU FAN"
+  },
+  {
+   "kind": "text",
+   "x": 247.0,
+   "y": 225.0,
+   "size": 23,
+   "fill": "#ff007f",
+   "align": "center",
+   "text": "1300 RPM"
+  },
+  {
+   "kind": "text",
+   "x": 149.0,
+   "y": 232.5,
+   "size": 19,
+   "fill": "#3fece8",
+   "align": "center",
+   "text": "{cpu_temp}°C"
+  },
+  {
+   "kind": "image",
+   "x": 127.0,
+   "y": 64.5,
+   "w": 44.0,
+   "h": 66.0,
+   "path": "assets/n10_2.png"
+  },
+  {
+   "kind": "text",
+   "x": 149.0,
+   "y": 411.0,
+   "size": 17,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "Temp"
+  },
+  {
+   "kind": "text",
+   "x": 149.0,
+   "y": 445.5,
+   "size": 19,
+   "fill": "#3fece8",
+   "align": "center",
+   "text": "{gpu_temp}°C"
+  },
+  {
+   "kind": "image",
+   "x": 129.0,
+   "y": 282.0,
+   "w": 44.0,
+   "h": 66.0,
+   "path": "assets/n10_3.png"
+  },
+  {
+   "kind": "image",
+   "x": 425.0,
+   "y": 64.5,
+   "w": 44.0,
+   "h": 66.0,
+   "path": "assets/n10_4.png"
+  },
+  {
+   "kind": "image",
+   "x": 428.0,
+   "y": 282.0,
+   "w": 44.0,
+   "h": 66.0,
+   "path": "assets/n10_5.png"
+  },
+  {
+   "kind": "text",
+   "x": 266.0,
+   "y": 370.5,
+   "size": 15,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "%"
+  }
+ ]
+}

@@ -63,6 +63,7 @@ pub struct ScreenRenderer {
     font: Font,
     theme: String,
     spec: Option<theme_spec::ThemeSpec>,
+    images: std::sync::Mutex<theme_spec::ImageCache>,
 }
 
 impl ScreenRenderer {
@@ -81,6 +82,7 @@ impl ScreenRenderer {
             font,
             theme: theme.to_string(),
             spec: None,
+            images: std::sync::Mutex::new(theme_spec::ImageCache::default()),
         };
         renderer.reload_spec();
         Ok(renderer)
@@ -100,10 +102,7 @@ impl ScreenRenderer {
         // A user/system spec file always wins over builtins, so designs edited
         // in Theme Studio (e.g. a customized cards.json) take effect.
         if let Some(path) = theme_spec::find_spec_file(&self.theme) {
-            match std::fs::read_to_string(&path)
-                .map_err(|e| e.to_string())
-                .and_then(|s| theme_spec::parse_spec(&s))
-            {
+            match theme_spec::parse_spec_file(&path) {
                 Ok(spec) => {
                     log::info!("Theme '{}' loaded from {}", self.theme, path.display());
                     self.spec = Some(spec);
@@ -129,7 +128,8 @@ impl ScreenRenderer {
     pub fn render(&self, m: &Metrics) -> Vec<u8> {
         let mut canvas = draw::Canvas::new(480, 480);
         if let Some(spec) = &self.spec {
-            theme_spec::render(&mut canvas, spec, m, &self.font);
+            let mut images = self.images.lock().unwrap();
+            theme_spec::render(&mut canvas, spec, m, &self.font, &mut images);
             return canvas.px;
         }
         match self.theme.as_str() {
@@ -144,7 +144,8 @@ impl ScreenRenderer {
     /// Render one specific spec (offline preview CLI).
     pub fn render_spec_frame(&self, spec: &theme_spec::ThemeSpec, m: &Metrics) -> Vec<u8> {
         let mut canvas = draw::Canvas::new(480, 480);
-        theme_spec::render(&mut canvas, spec, m, &self.font);
+        let mut images = self.images.lock().unwrap();
+        theme_spec::render(&mut canvas, spec, m, &self.font, &mut images);
         canvas.px
     }
 }

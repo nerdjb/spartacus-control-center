@@ -1,0 +1,323 @@
+{
+ "name": "n5",
+ "background": {
+  "kind": "gradient",
+  "top": "#bebebe",
+  "bottom": "#686868"
+ },
+ "widgets": [
+  {
+   "kind": "panel",
+   "x": 11.0,
+   "y": 318.8,
+   "w": 196.0,
+   "h": 145.5,
+   "fill": "#222222",
+   "r": 2.0,
+   "stroke": "#ffffff",
+   "stroke_w": 1.0
+  },
+  {
+   "kind": "panel",
+   "x": 12.0,
+   "y": 167.2,
+   "w": 194.0,
+   "h": 145.5,
+   "fill": "#222222",
+   "r": 2.0,
+   "stroke": "#ffffff",
+   "stroke_w": 1.0
+  },
+  {
+   "kind": "ring",
+   "cx": 348.0,
+   "cy": 247.5,
+   "r": 93.6,
+   "thickness": 18.7,
+   "track": "#ffffff",
+   "fill": "#05daff",
+   "binding": "cpu_usage",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 360.0
+  },
+  {
+   "kind": "text",
+   "x": 277.0,
+   "y": 42.0,
+   "size": 38,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "16:37:00"
+  },
+  {
+   "kind": "text",
+   "x": 422.0,
+   "y": 33.0,
+   "size": 20,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "2025/12/26"
+  },
+  {
+   "kind": "panel",
+   "x": 13.0,
+   "y": 15.8,
+   "w": 194.0,
+   "h": 145.5,
+   "fill": "#222222",
+   "r": 2.0,
+   "stroke": "#ffffff",
+   "stroke_w": 1.0
+  },
+  {
+   "kind": "text",
+   "x": 349.0,
+   "y": 337.5,
+   "size": 37,
+   "fill": "#d301c5",
+   "align": "center",
+   "text": "CPU"
+  },
+  {
+   "kind": "text",
+   "x": 94.0,
+   "y": 244.5,
+   "size": 19,
+   "fill": "#00fdfb",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 165.0,
+   "y": 100.5,
+   "size": 22,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "Temp"
+  },
+  {
+   "kind": "text",
+   "x": 349.0,
+   "y": 246.0,
+   "size": 70,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{cpu_usage}"
+  },
+  {
+   "kind": "ring",
+   "cx": 72.0,
+   "cy": 390.0,
+   "r": 39.1,
+   "thickness": 10.4,
+   "track": "#ffffff",
+   "fill": "#42f2fc",
+   "binding": "disk_pct",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 270.0
+  },
+  {
+   "kind": "ring",
+   "cx": 72.0,
+   "cy": 90.0,
+   "r": 39.8,
+   "thickness": 10.6,
+   "track": "#ffffff",
+   "fill": "#e91e63",
+   "binding": "gpu_usage",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 270.0
+  },
+  {
+   "kind": "text",
+   "x": 400.0,
+   "y": 255.0,
+   "size": 29,
+   "fill": "#00fdfb",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 65.0,
+   "y": 88.5,
+   "size": 38,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{gpu_usage}"
+  },
+  {
+   "kind": "text",
+   "x": 72.0,
+   "y": 141.0,
+   "size": 22,
+   "fill": "#d301c5",
+   "align": "center",
+   "text": "GPU"
+  },
+  {
+   "kind": "text",
+   "x": 165.0,
+   "y": 141.0,
+   "size": 28,
+   "fill": "#05daff",
+   "align": "center",
+   "text": "{gpu_temp}°C"
+  },
+  {
+   "kind": "ring",
+   "cx": 72.0,
+   "cy": 240.0,
+   "r": 39.8,
+   "thickness": 10.6,
+   "track": "#ffffff",
+   "fill": "#ff5722",
+   "binding": "ram_pct",
+   "min": 0,
+   "max": 100,
+   "start": -90.0,
+   "sweep": 270.0
+  },
+  {
+   "kind": "text",
+   "x": 72.0,
+   "y": 291.0,
+   "size": 22,
+   "fill": "#d301c5",
+   "align": "center",
+   "text": "RAM"
+  },
+  {
+   "kind": "text",
+   "x": 94.0,
+   "y": 93.0,
+   "size": 19,
+   "fill": "#00fdfb",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 96.0,
+   "y": 399.0,
+   "size": 19,
+   "fill": "#00fdfb",
+   "align": "center",
+   "text": "%"
+  },
+  {
+   "kind": "text",
+   "x": 65.0,
+   "y": 237.0,
+   "size": 38,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{ram_pct}"
+  },
+  {
+   "kind": "text",
+   "x": 165.0,
+   "y": 279.0,
+   "size": 30,
+   "fill": "#05daff",
+   "align": "center",
+   "text": "{ram_total}GB"
+  },
+  {
+   "kind": "text",
+   "x": 65.0,
+   "y": 393.0,
+   "size": 38,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "{disk_pct}"
+  },
+  {
+   "kind": "text",
+   "x": 73.0,
+   "y": 444.0,
+   "size": 22,
+   "fill": "#d301c5",
+   "align": "center",
+   "text": "SSD"
+  },
+  {
+   "kind": "text",
+   "x": 166.0,
+   "y": 438.0,
+   "size": 19,
+   "fill": "#05daff",
+   "align": "center",
+   "text": "{disk_used}GB"
+  },
+  {
+   "kind": "bar",
+   "x": 276.2,
+   "y": 443.2,
+   "w": 128.0,
+   "h": 15.0,
+   "track": "#ffffff",
+   "fill": "#d301c5",
+   "binding": "cpu_temp",
+   "min": 0,
+   "max": 120
+  },
+  {
+   "kind": "text",
+   "x": 443.0,
+   "y": 451.5,
+   "size": 23,
+   "fill": "#05daff",
+   "align": "center",
+   "text": "{cpu_temp}°C"
+  },
+  {
+   "kind": "image",
+   "x": 324.0,
+   "y": 123.0,
+   "w": 50.0,
+   "h": 75.0,
+   "path": "assets/n5_1.png"
+  },
+  {
+   "kind": "image",
+   "x": 140.0,
+   "y": 16.5,
+   "w": 50.0,
+   "h": 75.0,
+   "path": "assets/n5_2.png"
+  },
+  {
+   "kind": "image",
+   "x": 140.0,
+   "y": 172.5,
+   "w": 50.0,
+   "h": 75.0,
+   "path": "assets/n5_3.png"
+  },
+  {
+   "kind": "image",
+   "x": 140.0,
+   "y": 331.5,
+   "w": 50.0,
+   "h": 75.0,
+   "path": "assets/n5_4.png"
+  },
+  {
+   "kind": "text",
+   "x": 245.0,
+   "y": 451.5,
+   "size": 22,
+   "fill": "#ffffff",
+   "align": "center",
+   "text": "Temp"
+  }
+ ]
+}

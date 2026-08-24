@@ -50,6 +50,7 @@ class Widget:
     sweep: float = 360.0
     center_text: str = ""
     center_size: float = 24.0
+    path: str = ""             # image file (PNG/JPEG), relative to the theme JSON
 
     @property
     def name(self) -> str:
@@ -69,6 +70,7 @@ class Widget:
 @dataclass
 class ThemeSpec:
     name: str = "my-theme"
+    source_dir: str = ""      # dir of the loaded JSON; resolves image assets
     background: dict = field(default_factory=lambda: {
         "kind": "gradient", "top": "#14171C", "bottom": "#1D222B"})
     widgets: list[Widget] = field(default_factory=list)
@@ -85,8 +87,10 @@ class ThemeSpec:
 
     @staticmethod
     def load(path) -> "ThemeSpec":
-        data = json.loads(Path(path).read_text())
-        return ThemeSpec.from_dict(data)
+        path = Path(path)
+        spec = ThemeSpec.from_dict(json.loads(path.read_text()))
+        spec.source_dir = str(path.parent)
+        return spec
 
     @staticmethod
     def from_dict(data: dict) -> "ThemeSpec":
@@ -117,14 +121,12 @@ class ThemeSpec:
 
 
 def builtin_specs() -> dict[str, ThemeSpec]:
-    """The daemon's embedded spec themes, as editable starting points."""
+    """All shipped spec themes, as editable starting points."""
     root = Path(__file__).resolve().parent / "themes"
     out: dict[str, ThemeSpec] = {}
-    for name in ("cards", "cards-light", "neon", "aurora", "slate", "aorus-rose"):
-        path = root / f"{name}.json"
-        if path.exists():
-            try:
-                out[name] = ThemeSpec.load(path)
-            except Exception:
-                pass
+    for path in sorted(root.glob("*.json")):
+        try:
+            out[path.stem] = ThemeSpec.load(path)
+        except Exception:
+            pass
     return out

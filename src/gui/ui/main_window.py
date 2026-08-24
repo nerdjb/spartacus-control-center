@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+import shutil
 from copy import deepcopy
 from datetime import datetime
 from pathlib import Path
@@ -520,6 +521,15 @@ class ThemeStudioPage(QWidget):
             target_dir = Path.home() / ".config" / "spartacus" / "themes"
             target_dir.mkdir(parents=True, exist_ok=True)
             self.spec.save(target_dir / f"{self.spec.name}.json")
+            for widget in self.spec.widgets:
+                if widget.kind == "image" and widget.path:
+                    src = Path(widget.path)
+                    if not src.is_absolute() and self.spec.source_dir:
+                        src = Path(self.spec.source_dir) / widget.path
+                    if src.is_file():
+                        dst = target_dir / widget.path
+                        dst.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(src, dst)
             result = self.client.try_call("SetTheme", {"name": self.spec.name})
             if result is not None:
                 self.status.setText(f"Daemon now renders '{self.spec.name}' natively. "

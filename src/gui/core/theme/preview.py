@@ -144,6 +144,23 @@ class SpecRenderer:
             self._draw_ring(draw, w, S)
         elif kind == "bar":
             self._draw_bar(draw, w, S)
+        elif kind == "image":
+            self._draw_image(image, w, S)
+
+    def _draw_image(self, image: Image.Image, w: Widget, S: int) -> None:
+        if not w.path:
+            return
+        path = Path(w.path)
+        if not path.is_absolute() and self.spec.source_dir:
+            path = Path(self.spec.source_dir) / path
+        if not path.is_file():
+            return
+        try:
+            src = Image.open(path).convert("RGBA")
+        except Exception:
+            return
+        size = (max(1, int(w.w * S)), max(1, int(w.h * S)))
+        image.alpha_composite(src.resize(size), (int(w.x * S), int(w.y * S)))
 
     @staticmethod
     def _box(x, y, w, h, S):
