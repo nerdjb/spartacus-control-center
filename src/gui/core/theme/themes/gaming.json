@@ -1,0 +1,210 @@
+{
+ "name": "gaming",
+ "background": {
+  "kind": "gradient",
+  "top": "#0A0C14",
+  "bottom": "#131A2E"
+ },
+ "widgets": [
+  {
+   "kind": "text",
+   "x": 240,
+   "y": 34,
+   "size": 24,
+   "fill": "#8A93A6",
+   "align": "center",
+   "text": "{time}"
+  },
+  {
+   "kind": "panel",
+   "x": 16,
+   "y": 60,
+   "w": 218,
+   "h": 150,
+   "r": 14,
+   "fill": "#161D31",
+   "stroke": "#26304A",
+   "stroke_w": 2
+  },
+  {
+   "kind": "text",
+   "x": 32,
+   "y": 96,
+   "size": 18,
+   "fill": "#00E5FF",
+   "text": "CPU"
+  },
+  {
+   "kind": "text",
+   "x": 32,
+   "y": 140,
+   "size": 34,
+   "fill": "#F2F4F8",
+   "text": "{cpu_temp:.0}°C"
+  },
+  {
+   "kind": "bar",
+   "x": 32,
+   "y": 158,
+   "w": 186,
+   "h": 10,
+   "track": "#26304A",
+   "fill": "#00E5FF",
+   "binding": "cpu_usage",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "kind": "text",
+   "x": 125,
+   "y": 196,
+   "size": 14,
+   "fill": "#8A93A6",
+   "align": "center",
+   "text": "{cpu_usage:.0}% · {cpu_freq:.2}GHz"
+  },
+  {
+   "kind": "panel",
+   "x": 246,
+   "y": 60,
+   "w": 218,
+   "h": 150,
+   "r": 14,
+   "fill": "#161D31",
+   "stroke": "#26304A",
+   "stroke_w": 2
+  },
+  {
+   "kind": "text",
+   "x": 262,
+   "y": 96,
+   "size": 18,
+   "fill": "#FF3DDC",
+   "text": "GPU"
+  },
+  {
+   "kind": "text",
+   "x": 262,
+   "y": 140,
+   "size": 34,
+   "fill": "#F2F4F8",
+   "text": "{gpu_temp:.0}°C"
+  },
+  {
+   "kind": "bar",
+   "x": 262,
+   "y": 158,
+   "w": 186,
+   "h": 10,
+   "track": "#26304A",
+   "fill": "#FF3DDC",
+   "binding": "gpu_usage",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "kind": "text",
+   "x": 355,
+   "y": 196,
+   "size": 14,
+   "fill": "#8A93A6",
+   "align": "center",
+   "text": "{gpu_usage:.0}% load"
+  },
+  {
+   "kind": "text",
+   "x": 240,
+   "y": 290,
+   "size": 96,
+   "fill": "#7CFC00",
+   "align": "center",
+   "text": "{fps:.0}"
+  },
+  {
+   "kind": "text",
+   "x": 240,
+   "y": 322,
+   "size": 20,
+   "fill": "#8A93A6",
+   "align": "center",
+   "text": "FPS"
+  },
+  {
+   "kind": "text",
+   "x": 240,
+   "y": 356,
+   "size": 18,
+   "fill": "#B8C0CC",
+   "align": "center",
+   "text": "{frametime:.1} ms frame time"
+  },
+  {
+   "kind": "text",
+   "x": 16,
+   "y": 390,
+   "size": 14,
+   "fill": "#8A93A6",
+   "text": "RAM {ram_used:.1}/{ram_total:.0} GB"
+  },
+  {
+   "kind": "bar",
+   "x": 16,
+   "y": 400,
+   "w": 218,
+   "h": 8,
+   "track": "#26304A",
+   "fill": "#4DA3FF",
+   "binding": "ram_pct",
+   "min": 0,
+   "max": 100
+  },
+  {
+   "kind": "ring",
+   "cx": 360,
+   "cy": 412,
+   "r": 44,
+   "thickness": 10,
+   "track": "#26304A",
+   "fill": "#FF8A3D",
+   "binding": "pump_pct",
+   "min": 0,
+   "max": 100,
+   "center_text": "{pump_pct:.0}%",
+   "center_size": 20
+  },
+  {
+   "kind": "text",
+   "x": 360,
+   "y": 470,
+   "size": 12,
+   "fill": "#8A93A6",
+   "align": "center",
+   "text": "PUMP"
+  },
+  {
+   "kind": "text",
+   "x": 16,
+   "y": 436,
+   "size": 14,
+   "fill": "#3DDC97",
+   "text": "↓ {net_down:.0} kB/s"
+  },
+  {
+   "kind": "text",
+   "x": 16,
+   "y": 458,
+   "size": 14,
+   "fill": "#FF7EB3",
+   "text": "↑ {net_up:.0} kB/s"
+  },
+  {
+   "kind": "text",
+   "x": 240,
+   "y": 452,
+   "size": 12,
+   "fill": "#8A93A6",
+   "align": "center",
+   "text": "FANS {fan_rpm:.0} · PUMP {pump_rpm:.0} RPM"
+  }
+ ]
+}

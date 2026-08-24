@@ -256,6 +256,7 @@ The panel is rendered **by the daemon, natively, in Rust** — the same code pat
 | `neon` | dark navy, cyan/magenta/purple ring gauges |
 | `aurora` | deep teal, minimal stat rows, pump ring in the header |
 | `slate` | graphite cards with orange/blue accents |
+| `gaming` | dark neon: huge FPS counter, frametime, CPU/GPU panels, no SSD |
 
 Switch themes from **Theme Studio → APPLY TO DAEMON**, or over IPC:
 
